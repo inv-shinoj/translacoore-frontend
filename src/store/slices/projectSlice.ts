@@ -5,10 +5,13 @@ import { Project, ProjectState, CreateProjectPayload } from "@/types/api";
 export const fetchProjects = createAsyncThunk<Project[]>(
   "project/fetchProjects",
   async (_, { rejectWithValue }) => {
+    console.log("[Project] Fetching projects");
     try {
       const res = await api.get<Project[]>("/api/project/");
+      console.log(`[Project] Fetched ${res.data.length} projects`);
       return res.data;
     } catch (err: any) {
+      console.error("[Project] Failed to fetch projects:", err.response?.data);
       return rejectWithValue(
         err.response?.data?.detail || "Failed to fetch projects"
       );
@@ -19,10 +22,13 @@ export const fetchProjects = createAsyncThunk<Project[]>(
 export const createProject = createAsyncThunk<Project, CreateProjectPayload>(
   "project/createProject",
   async (payload, { rejectWithValue }) => {
+    console.log("[Project] Creating project:", payload.name);
     try {
       const res = await api.post<Project>("/api/project/", payload);
+      console.log("[Project] Project created:", res.data.id, res.data.name);
       return res.data;
     } catch (err: any) {
+      console.error("[Project] Failed to create project:", err.response?.data);
       return rejectWithValue(
         err.response?.data || "Failed to create project"
       );
@@ -33,10 +39,13 @@ export const createProject = createAsyncThunk<Project, CreateProjectPayload>(
 export const deleteProject = createAsyncThunk<string, string>(
   "project/deleteProject",
   async (id, { rejectWithValue }) => {
+    console.log("[Project] Deleting project:", id);
     try {
       await api.delete(`/api/project/${id}/`);
+      console.log("[Project] Project deleted:", id);
       return id;
     } catch (err: any) {
+      console.error("[Project] Failed to delete project:", err.response?.data);
       return rejectWithValue(
         err.response?.data?.detail || "Failed to delete project"
       );

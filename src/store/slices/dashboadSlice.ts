@@ -5,10 +5,13 @@ import { Project, DashboardState } from "@/types/api";
 export const fetchProjects = createAsyncThunk<Project[]>(
   "dashboard/fetchProjects",
   async (_, { rejectWithValue }) => {
+    console.log("[Dashboard] Fetching projects");
     try {
       const res = await api.get<Project[]>("/api/project/");
+      console.log(`[Dashboard] Fetched ${res.data.length} projects`);
       return res.data;
     } catch (err: any) {
+      console.error("[Dashboard] Failed to fetch projects:", err.response?.data);
       return rejectWithValue(
         err.response?.data?.detail || "Failed to fetch projects"
       );
