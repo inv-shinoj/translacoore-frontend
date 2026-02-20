@@ -1,36 +1,19 @@
 import Card from "@/components/ui/Card";
 import Badge from "@/components/ui/Badge";
-import ProgressBar from "@/components/ui/ProgressBar";
 import Table from "@/components/ui/Table";
 import Avatar from "@/components/ui/Avatar";
+import { Project, ProjectStatus } from "@/types/api";
 
-interface Project {
-  id: number;
-  name: string;
-  language: string;
-  progress: number;
-  status: "active" | "review" | "completed" | "draft";
-  lead: string;
-  forms: number;
+interface ProjectTableProps {
+  projects: Project[];
 }
 
-const statusVariant: Record<
-  Project["status"],
-  "info" | "warning" | "success" | "default"
-> = {
-  active: "info",
-  review: "warning",
-  completed: "success",
-  draft: "default",
+const statusVariant: Record<ProjectStatus, "info" | "warning" | "success" | "default"> = {
+  Active: "info",
+  Draft: "default",
+  Completed: "success",
+  Archived: "warning",
 };
-
-const projects: Project[] = [
-  { id: 1, name: "Website Redesign", language: "EN → FR", progress: 72, status: "active", lead: "Sarah Kim", forms: 14 },
-  { id: 2, name: "Mobile App v2", language: "EN → DE", progress: 45, status: "review", lead: "Marcus Chen", forms: 8 },
-  { id: 3, name: "Marketing Campaign Q1", language: "EN → ES", progress: 100, status: "completed", lead: "Emily Davis", forms: 6 },
-  { id: 4, name: "Legal Documents", language: "EN → JA", progress: 12, status: "draft", lead: "James Wilson", forms: 3 },
-  { id: 5, name: "E-commerce Platform", language: "EN → PT", progress: 58, status: "active", lead: "Aisha Patel", forms: 11 },
-];
 
 const columns = [
   {
@@ -41,17 +24,8 @@ const columns = [
         <Avatar name={p.name} size="sm" />
         <div>
           <p className="font-medium text-gray-900">{p.name}</p>
-          <p className="text-xs text-gray-400">{p.language}</p>
+          <p className="text-xs text-gray-400">{p.form_type_name}</p>
         </div>
-      </div>
-    ),
-  },
-  {
-    key: "progress",
-    header: "Progress",
-    render: (p: Project) => (
-      <div className="w-32">
-        <ProgressBar value={p.progress} showLabel />
       </div>
     ),
   },
@@ -59,32 +33,37 @@ const columns = [
     key: "status",
     header: "Status",
     render: (p: Project) => (
-      <Badge variant={statusVariant[p.status]}>
-        {p.status.charAt(0).toUpperCase() + p.status.slice(1)}
+      <Badge variant={statusVariant[p.status_display] ?? "default"}>
+        {p.status_display}
       </Badge>
     ),
   },
   {
-    key: "lead",
-    header: "Lead",
+    key: "created_by_name",
+    header: "Created By",
     render: (p: Project) => (
       <div className="flex items-center gap-2">
-        <Avatar name={p.lead} size="sm" />
-        <span className="text-gray-700">{p.lead}</span>
+        <Avatar name={p.created_by_name} size="sm" />
+        <span className="text-gray-700">{p.created_by_name}</span>
       </div>
     ),
   },
   {
-    key: "forms",
-    header: "Forms",
+    key: "created_at",
+    header: "Created",
     render: (p: Project) => (
-      <span className="text-gray-600">{p.forms}</span>
+      <span className="text-gray-500 text-sm">
+        {new Date(p.created_at).toLocaleDateString("en-US", {
+          month: "short",
+          day: "numeric",
+          year: "numeric",
+        })}
+      </span>
     ),
-    className: "text-center",
   },
 ];
 
-export default function ProjectTable() {
+export default function ProjectTable({ projects }: ProjectTableProps) {
   return (
     <Card padding="none">
       <div className="px-5 py-4 border-b border-gray-200 flex items-center justify-between">

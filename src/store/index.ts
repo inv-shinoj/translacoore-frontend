@@ -11,6 +11,7 @@ import {
 } from "redux-persist";
 import storage from "redux-persist/lib/storage";
 import authReducer from "./slices/authSlice";
+import dashboardReducer from "./slices/dashboadSlice";
 
 const authPersistConfig = {
   key: "auth",
@@ -20,6 +21,7 @@ const authPersistConfig = {
 
 const rootReducer = combineReducers({
   auth: persistReducer(authPersistConfig, authReducer),
+  dashboard: dashboardReducer,
 });
 
 export const store = configureStore({
