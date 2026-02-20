@@ -1,0 +1,24 @@
+"use client";
+
+import { GoogleLogin } from "@react-oauth/google";
+import { useAppDispatch } from "@/store/hooks";
+import { googleLogin } from "@/store/slices/authSlice";
+
+export default function GoogleLoginButton() {
+  const dispatch = useAppDispatch();
+
+  return (
+    <div style={{ display: "flex", justifyContent: "center" }}>
+      <GoogleLogin
+        onSuccess={cred => {
+          if (cred.credential) {
+            dispatch(googleLogin(cred.credential));
+          }
+        }}
+        onError={() => {
+          console.error("Google login failed");
+        }}
+      />
+    </div>
+  );
+}
