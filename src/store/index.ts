@@ -12,6 +12,7 @@ import {
 import storage from "redux-persist/lib/storage";
 import authReducer from "./slices/authSlice";
 import dashboardReducer from "./slices/dashboadSlice";
+import projectReducer from "./slices/projectSlice";
 
 const authPersistConfig = {
   key: "auth",
@@ -22,6 +23,7 @@ const authPersistConfig = {
 const rootReducer = combineReducers({
   auth: persistReducer(authPersistConfig, authReducer),
   dashboard: dashboardReducer,
+  project: projectReducer,
 });
 
 export const store = configureStore({

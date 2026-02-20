@@ -21,3 +21,16 @@ export interface DashboardState {
   loading: boolean;
   error: string | null;
 }
+
+export interface CreateProjectPayload {
+  name: string;
+  form_type: number;
+  project_data: Record<string, any>;
+}
+
+export interface ProjectState {
+  projects: Project[];
+  loading: boolean;
+  submitting: boolean;
+  error: string | null;
+}

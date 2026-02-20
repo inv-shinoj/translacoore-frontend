@@ -30,7 +30,6 @@ export default function DashboardPage() {
         actions={
           <>
             <Button variant="secondary">Export</Button>
-            <Button>New Project</Button>
           </>
         }
       />
@@ -61,14 +60,6 @@ export default function DashboardPage() {
           }
           icon="📊"
         />
-      </div>
-
-      {/* Project Cards */}
-      <div className="mb-6">
-        <h2 className="text-sm font-semibold text-gray-900 mb-3">
-          Active Projects
-        </h2>
-        <ProjectList projects={activeProjects} />
       </div>
 
       {/* Two-column: Table + Activity */}
