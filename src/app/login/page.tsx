@@ -13,6 +13,7 @@ export default function LoginPage() {
   const { user, loading, error } = useAppSelector(state => state.auth);
 
   useEffect(() => {
+    console.log("user: ", user)
     if (user) {
       router.replace("/dashboard");
     }

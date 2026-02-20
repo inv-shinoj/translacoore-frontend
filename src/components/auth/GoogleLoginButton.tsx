@@ -3,9 +3,13 @@
 import { GoogleLogin } from "@react-oauth/google";
 import { useAppDispatch } from "@/store/hooks";
 import { googleLogin } from "@/store/slices/authSlice";
+import { useRouter } from "next/navigation";
+
 
 export default function GoogleLoginButton() {
+  
   const dispatch = useAppDispatch();
+  const router = useRouter();
 
   return (
     <div style={{ display: "flex", justifyContent: "center" }}>
@@ -13,6 +17,8 @@ export default function GoogleLoginButton() {
         onSuccess={cred => {
           if (cred.credential) {
             dispatch(googleLogin(cred.credential));
+            console.log("Redirecting to dashboard")
+            router.replace("/dashboard");
           }
         }}
         onError={() => {
