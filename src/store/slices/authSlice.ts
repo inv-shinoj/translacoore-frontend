@@ -64,7 +64,7 @@ export const restoreSession = createAsyncThunk(
   }
 );
 
-export const logout = createAsyncThunk(
+export const logout = createAsyncThunk<void, void>(
     "auth/logout",
     async(_,{rejectWithValue}) =>{
         try{
@@ -74,7 +74,7 @@ export const logout = createAsyncThunk(
                 { withCredentials: true }
             );
         }catch{
-            // best-effort: clear local state regardless
+            return rejectWithValue("Logout failed");
         }
     }
 )
@@ -92,6 +92,7 @@ const authSlice = createSlice({
   },
   extraReducers: builder => {
     builder
+    // Email/Password Login
       .addCase(login.pending, state => {
         state.loading = true;
       })
@@ -105,6 +106,8 @@ const authSlice = createSlice({
         state.loading = false;
         state.error = action.payload as string;
       })
+
+      // Logout
       .addCase(logout.fulfilled, state => {
         state.user = null;
         state.accessToken = null;
@@ -115,6 +118,38 @@ const authSlice = createSlice({
         state.user = null;
         state.accessToken = null;
         state.error = null;
+        setAccessToken(null);
+      })
+
+      // Google Login
+      .addCase(googleLogin.pending, state => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(googleLogin.fulfilled, (state, action) => {
+        state.loading = false;
+        state.accessToken = action.payload.access;
+        state.user = action.payload.user;
+        setAccessToken(action.payload.access);
+      })
+      .addCase(googleLogin.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      })
+
+      // Session Restore
+      .addCase(restoreSession.pending, state => {
+        state.loading = true;
+      })
+      .addCase(restoreSession.fulfilled, (state, action) => {
+        state.loading = false;
+        state.accessToken = action.payload.access;
+        setAccessToken(action.payload.access);
+      })
+      .addCase(restoreSession.rejected, state => {
+        state.loading = false;
+        state.user = null;
+        state.accessToken = null;
         setAccessToken(null);
       });
   },

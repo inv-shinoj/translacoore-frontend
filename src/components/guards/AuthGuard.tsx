@@ -11,14 +11,17 @@ export default function AuthGuard({
 }) {
   const router = useRouter();
   const { user, loading } = useAppSelector(state => state.auth);
+  const isRehydrated = useAppSelector(
+    state => (state.auth as any)._persist?.rehydrated ?? false
+  );
 
   useEffect(() => {
-    if (!loading && !user) {
+    if (isRehydrated && !loading && !user) {
       router.replace("/login");
     }
-  }, [user, loading]);
+  }, [user, loading, isRehydrated, router]);
 
-  if (loading || !user) {
+  if (!isRehydrated || loading || !user) {
     return <div>Checking authentication...</div>;
   }
 
