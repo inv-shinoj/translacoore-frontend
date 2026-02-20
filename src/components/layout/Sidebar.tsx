@@ -10,11 +10,11 @@ interface NavItem {
 }
 
 const navItems: NavItem[] = [
-  { label: "Dashboard", href: "/dashboard", icon: "📊" },
-  { label: "Projects", href: "/dashboard/projects", icon: "📁" },
-  { label: "Forms", href: "/dashboard/forms", icon: "📝" },
-  { label: "Team", href: "/dashboard/team", icon: "👥" },
-  { label: "Settings", href: "/dashboard/settings", icon: "⚙️" },
+  { label: "Dashboard", href: "/admin/dashboard", icon: "📊" },
+  { label: "Projects", href: "/admin/dashboard/projects", icon: "📁" },
+  { label: "Forms", href: "/admin/dashboard/forms", icon: "📝" },
+  { label: "Team", href: "/admin/dashboard/team", icon: "👥" },
+  { label: "Settings", href: "/admin/dashboard/settings", icon: "⚙️" },
 ];
 
 export default function Sidebar() {
@@ -32,8 +32,8 @@ export default function Sidebar() {
       <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
         {navItems.map(item => {
           const isActive =
-            item.href === "/dashboard"
-              ? pathname === "/dashboard"
+            item.href === "/admin/dashboard"
+              ? pathname === "/admin/dashboard"
               : pathname.startsWith(item.href);
 
           return (

@@ -14,7 +14,7 @@ export default function GuestGuard({
 
   useEffect(() => {
     if (!loading && user) {
-      router.replace("/dashboard");
+      router.replace("/admin/dashboard");
     }
   }, [user, loading]);
 

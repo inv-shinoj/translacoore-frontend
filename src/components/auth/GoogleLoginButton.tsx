@@ -18,7 +18,7 @@ export default function GoogleLoginButton() {
           if (cred.credential) {
             dispatch(googleLogin(cred.credential));
             console.log("Redirecting to dashboard")
-            router.replace("/dashboard");
+            router.replace("/admin/dashboard");
           }
         }}
         onError={() => {
