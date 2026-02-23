@@ -15,7 +15,7 @@ export default function LoginPage() {
   useEffect(() => {
     console.log("user: ", user)
     if (user) {
-      router.replace("/dashboard");
+      router.replace("/admin/dashboard");
     }
   }, [user]);
 

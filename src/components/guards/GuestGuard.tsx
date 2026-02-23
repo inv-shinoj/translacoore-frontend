@@ -14,7 +14,8 @@ export default function GuestGuard({
 
   useEffect(() => {
     if (!loading && user) {
-      router.replace("/dashboard");
+      console.log("[GuestGuard] Already authenticated — redirecting to /admin/dashboard");
+      router.replace("/admin/dashboard");
     }
   }, [user, loading]);
 

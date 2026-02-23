@@ -17,6 +17,7 @@ export default function AuthGuard({
 
   useEffect(() => {
     if (isRehydrated && !loading && !user) {
+      console.log("[AuthGuard] No authenticated user — redirecting to /login");
       router.replace("/login");
     }
   }, [user, loading, isRehydrated, router]);

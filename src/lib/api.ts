@@ -36,11 +36,15 @@ api.interceptors.request.use(config => {
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
+  console.log(`[API] ${config.method?.toUpperCase()} ${config.baseURL}${config.url}`);
   return config;
 });
 
 api.interceptors.response.use(
-  response => response,
+  response => {
+    console.log(`[API] ${response.status} ${response.config.url}`);
+    return response;
+  },
   async error => {
     const originalRequest = error.config;
 
@@ -73,16 +77,19 @@ api.interceptors.response.use(
       isRefreshing = true;
 
       try {
+        console.log("[API] Access token expired — attempting refresh");
         const newToken = await refreshHandler();
 
         if (!newToken) throw new Error("Refresh failed");
 
+        console.log("[API] Token refreshed successfully");
         setAccessToken(newToken);
         processQueue(null, newToken);
 
         originalRequest.headers.Authorization = `Bearer ${newToken}`;
         return api(originalRequest);
       } catch (err) {
+        console.error("[API] Token refresh failed — logging out", err);
         processQueue(err, null);
         logoutHandler?.();
         return Promise.reject(err);
@@ -91,6 +98,7 @@ api.interceptors.response.use(
       }
     }
 
+    console.error(`[API] Error ${error.response?.status ?? "network"} — ${error.config?.url}`, error.response?.data);
     return Promise.reject(error);
   }
 );

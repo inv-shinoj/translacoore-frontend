@@ -19,13 +19,16 @@ const initialState: AuthState = {
 export const login = createAsyncThunk<AuthResponse, LoginPayload>(
   "auth/login",
   async (payload, { rejectWithValue }) => {
+    console.log("[Auth] Attempting email login for:", payload.email);
     try {
       const res = await api.post<AuthResponse>(
         "/accounts/login/",
         payload
       );
+      console.log("[Auth] Email login successful:", res.data.user.email);
       return res.data;
     } catch (err: any) {
+      console.error("[Auth] Email login failed:", err.response?.data?.detail);
       return rejectWithValue(err.response?.data?.detail);
     }
   }
@@ -37,13 +40,16 @@ export const googleLogin = createAsyncThunk<
 >(
   "auth/googleLogin",
   async (idToken, { rejectWithValue }) => {
+    console.log("[Auth] Attempting Google login");
     try {
       const res = await api.post<AuthResponse>(
         "/accounts/login/google/",
         { id_token: idToken }
       );
+      console.log("[Auth] Google login successful:", res.data.user.email);
       return res.data;
     } catch (err: any) {
+      console.error("[Auth] Google login failed:", err.response?.data?.detail);
       return rejectWithValue(
         err.response?.data?.detail || "Google login failed"
       );
@@ -55,10 +61,13 @@ export const googleLogin = createAsyncThunk<
 export const restoreSession = createAsyncThunk(
   "auth/restoreSession",
   async (_, { rejectWithValue }) => {
+    console.log("[Auth] Restoring session");
     try {
       const res = await api.post("/accounts/token/refresh/");
+      console.log("[Auth] Session restored successfully");
       return res.data; // { access }
     } catch {
+      console.warn("[Auth] Session restore failed — session expired");
       return rejectWithValue("Session expired");
     }
   }
@@ -67,13 +76,16 @@ export const restoreSession = createAsyncThunk(
 export const logout = createAsyncThunk<void, void>(
     "auth/logout",
     async(_,{rejectWithValue}) =>{
+        console.log("[Auth] Logging out");
         try{
             await axios.post(
                 `${process.env.NEXT_PUBLIC_API_URL}/accounts/logout/`,
                 {},
                 { withCredentials: true }
             );
+            console.log("[Auth] Logout successful");
         }catch{
+            console.error("[Auth] Logout request failed");
             return rejectWithValue("Logout failed");
         }
     }
