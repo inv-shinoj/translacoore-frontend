@@ -11,7 +11,7 @@ export interface  Project {
   status: number;
   status_display: ProjectStatus;
   form_type_name: string;
-  created_by_name: string;
+  created_by_name: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -37,6 +37,15 @@ export interface ProjectState {
 
 export type FormTypeKey = 1 | 2 | 3 | 4;
 export type SchemaStatus = "Active" | "Inactive";
+export type SchemaFieldType = "text" | "textarea" | "select" | "date";
+
+export interface SchemaField {
+  key: string;
+  type: SchemaFieldType;
+  label: string;
+  required: boolean;
+  options?: string[];
+}
 
 export interface FormType {
   id: string;
@@ -52,6 +61,7 @@ export interface FormSchema {
   form_type: FormTypeKey;
   version: number;
   status: SchemaStatus;
+  schema_json: { fields: SchemaField[] };
   created_at: string;
 }
 

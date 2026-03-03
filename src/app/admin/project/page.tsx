@@ -8,9 +8,11 @@ import Card from "@/components/ui/Card";
 import Table from "@/components/ui/Table";
 import Avatar from "@/components/ui/Avatar";
 import EmptyState from "@/components/ui/EmptyState";
+import CreateProjectModal from "@/components/project/CreateProjectModal";
 import { Project, ProjectStatus } from "@/types/api";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
-import { fetchProjects } from "@/store/slices/projectSlice";
+import { fetchProjects, clearProjectError } from "@/store/slices/projectSlice";
+import { fetchFormTypes } from "@/store/slices/formSlice";
 
 const statusVariant: Record<ProjectStatus, "info" | "warning" | "success" | "default"> = {
   Active: "info",
@@ -99,22 +101,46 @@ const columns = [
 export default function ProjectsPage() {
   const [activeTab, setActiveTab] = useState<ProjectStatus | "All">("All");
   const [search, setSearch] = useState("");
+  const [showModal, setShowModal] = useState(false);
 
   const dispatch = useAppDispatch();
   const { projects, loading } = useAppSelector(state => state.project);
+  const user = useAppSelector(state => state.auth.user);
+  const formTypes = useAppSelector(state => state.form.types);
+
+  const canCreate = user?.role === "Admin" || user?.role === "Manager";
+
   const filtered = projects.filter(p => {
     const matchesTab = activeTab === "All" || p.status_display === activeTab;
     const matchesSearch = p.name.toLowerCase().includes(search.toLowerCase());
     return matchesTab && matchesSearch;
   });
 
-
   useEffect(() => {
     dispatch(fetchProjects());
+    if (formTypes.length === 0) {
+      dispatch(fetchFormTypes());
+    }
   }, [dispatch]);
+
+  const handleCloseModal = () => {
+    setShowModal(false);
+    dispatch(clearProjectError());
+  };
 
   return (
     <>
+      <PageHeader
+        title="Projects"
+        description="Manage and track all translation projects."
+        actions={
+          canCreate ? (
+            <Button variant="primary" size="md" onClick={() => setShowModal(true)}>
+              + New Project
+            </Button>
+          ) : undefined
+        }
+      />
       <Card padding="none">
         {/* Search + Tab filters */}
         <div className="px-5 py-4 border-b border-gray-200 flex flex-col sm:flex-row sm:items-center gap-3">
@@ -178,6 +204,8 @@ export default function ProjectsPage() {
           Showing {filtered.length} of {projects.length} projects
         </div>
       </Card>
+
+      {showModal && <CreateProjectModal onClose={handleCloseModal} />}
     </>
   );
 }

@@ -1,7 +1,7 @@
 type AvatarSize = "sm" | "md" | "lg";
 
 interface AvatarProps {
-  name: string;
+  name: string | null | undefined;
   size?: AvatarSize;
   className?: string;
 }
@@ -41,12 +41,13 @@ export default function Avatar({
   size = "md",
   className = "",
 }: AvatarProps) {
+  const safeName = name || "?";
   return (
     <div
-      className={`${sizeStyles[size]} ${getColor(name)} rounded-full flex items-center justify-center text-white font-medium shrink-0 ${className}`}
-      title={name}
+      className={`${sizeStyles[size]} ${getColor(safeName)} rounded-full flex items-center justify-center text-white font-medium shrink-0 ${className}`}
+      title={safeName}
     >
-      {getInitials(name)}
+      {getInitials(safeName)}
     </div>
   );
 }
