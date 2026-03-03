@@ -33,6 +33,33 @@ export interface ProjectState {
   loading: boolean;
   submitting: boolean;
   error: string | null;
+  employees: MemberUser[];
+  employeesLoading: boolean;
+}
+
+export type MemberRole = 2 | 3; // 2 = Lead, 3 = Employee
+
+export interface MemberUser {
+  id: string;
+  full_name: string;
+  email: string;
+  role: number;
+  role_display: string;
+}
+
+export interface ProjectMember {
+  id: number;
+  full_name: string;
+  email: string;
+  role: MemberRole;
+  role_display: string;
+  assigned_at: string;
+}
+
+export interface AddMemberPayload {
+  projectId: string;
+  user_id: string;
+  role: MemberRole;
 }
 
 export type FormTypeKey = 1 | 2 | 3 | 4;
