@@ -26,7 +26,6 @@ export default function CreateProjectModal({ onClose }: Props) {
   const allSchemas = useAppSelector((s) => s.form.schemas);
   const schemasLoading = useAppSelector((s) => s.form.loading);
 
-  const [name, setName] = useState("");
   const [formTypeKey, setFormTypeKey] = useState<number | "">(activeFormTypes[0]?.key ?? "");
   const [fieldValues, setFieldValues] = useState<Record<string, string>>({});
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
@@ -66,7 +65,7 @@ export default function CreateProjectModal({ onClose }: Props) {
 
     const result = await dispatch(
       createProject({
-        name,
+        name: fieldValues["title"] ?? "",
         form_type: formTypeKey as number,
         project_data: fieldValues,
       })
@@ -86,16 +85,6 @@ export default function CreateProjectModal({ onClose }: Props) {
     <Modal title="New Project" onClose={onClose}>
       <form onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden">
         <ModalBody>
-          <FormField label="Project Name" required>
-            <Input
-              type="text"
-              required
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="e.g. Annual Report 2026"
-            />
-          </FormField>
-
           <FormField label="Form Type" required>
             {activeFormTypes.length === 0 ? (
               <Alert variant="warning">

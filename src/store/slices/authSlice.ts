@@ -1,5 +1,4 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import axios from "axios";
 import api from "@/lib/api";
 import {
   AuthState,
@@ -12,6 +11,7 @@ import { setAccessToken } from "@/lib/authToken";
 const initialState: AuthState = {
   user: null,
   accessToken: null,
+  refreshToken: null,
   loading: false,
   error: null,
 };
@@ -60,12 +60,15 @@ export const googleLogin = createAsyncThunk<
 
 export const restoreSession = createAsyncThunk(
   "auth/restoreSession",
-  async (_, { rejectWithValue }) => {
+  async (_, { getState, rejectWithValue }) => {
     console.log("[Auth] Restoring session");
     try {
-      const res = await api.post("/accounts/token/refresh/");
+      const state = getState() as { auth: { refreshToken: string | null } };
+      const refresh = state.auth.refreshToken;
+      if (!refresh) return rejectWithValue("No refresh token");
+      const res = await api.post("/accounts/token/refresh/", { refresh });
       console.log("[Auth] Session restored successfully");
-      return res.data; // { access }
+      return res.data; // { access, refresh }
     } catch {
       console.warn("[Auth] Session restore failed — session expired");
       return rejectWithValue("Session expired");
@@ -75,14 +78,12 @@ export const restoreSession = createAsyncThunk(
 
 export const logout = createAsyncThunk<void, void>(
     "auth/logout",
-    async(_,{rejectWithValue}) =>{
+    async(_, { getState, rejectWithValue }) =>{
         console.log("[Auth] Logging out");
         try{
-            await axios.post(
-                `${process.env.NEXT_PUBLIC_API_URL}/accounts/logout/`,
-                {},
-                { withCredentials: true }
-            );
+            const state = getState() as { auth: { refreshToken: string | null } };
+            const refresh = state.auth.refreshToken;
+            await api.post("/accounts/logout/", { refresh });
             console.log("[Auth] Logout successful");
         }catch{
             console.error("[Auth] Logout request failed");
@@ -98,6 +99,7 @@ const authSlice = createSlice({
     clearAuth(state) {
       state.user = null;
       state.accessToken = null;
+      state.refreshToken = null;
       state.error = null;
       setAccessToken(null);
     },
@@ -111,6 +113,7 @@ const authSlice = createSlice({
       .addCase(login.fulfilled, (state, action) => {
         state.loading = false;
         state.accessToken = action.payload.access;
+        state.refreshToken = action.payload.refresh ?? null;
         state.user = action.payload.user;
         setAccessToken(action.payload.access);
       })
@@ -123,12 +126,14 @@ const authSlice = createSlice({
       .addCase(logout.fulfilled, state => {
         state.user = null;
         state.accessToken = null;
+        state.refreshToken = null;
         state.error = null;
         setAccessToken(null);
       })
       .addCase(logout.rejected, state => {
         state.user = null;
         state.accessToken = null;
+        state.refreshToken = null;
         state.error = null;
         setAccessToken(null);
       })
@@ -141,6 +146,7 @@ const authSlice = createSlice({
       .addCase(googleLogin.fulfilled, (state, action) => {
         state.loading = false;
         state.accessToken = action.payload.access;
+        state.refreshToken = action.payload.refresh ?? null;
         state.user = action.payload.user;
         setAccessToken(action.payload.access);
       })
@@ -156,12 +162,16 @@ const authSlice = createSlice({
       .addCase(restoreSession.fulfilled, (state, action) => {
         state.loading = false;
         state.accessToken = action.payload.access;
+        if (action.payload.refresh) {
+          state.refreshToken = action.payload.refresh;
+        }
         setAccessToken(action.payload.access);
       })
       .addCase(restoreSession.rejected, state => {
         state.loading = false;
         state.user = null;
         state.accessToken = null;
+        state.refreshToken = null;
         setAccessToken(null);
       });
   },

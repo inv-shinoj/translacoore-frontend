@@ -18,7 +18,7 @@ import formReducer from "./slices/formSlice";
 const authPersistConfig = {
   key: "auth",
   storage,
-  whitelist: ["user", "accessToken"], 
+  whitelist: ["user", "accessToken", "refreshToken"],
 };
 
 const rootReducer = combineReducers({
