@@ -25,9 +25,6 @@ const statusVariant: Record<ProjectStatus, "info" | "warning" | "success" | "def
 const tabs: { label: string; value: ProjectStatus | "All" }[] = [
   { label: "All", value: "All" },
   { label: "Active", value: "Active" },
-  { label: "Draft", value: "Draft" },
-  { label: "Completed", value: "Completed" },
-  { label: "Archived", value: "Archived" },
 ];
 
 export default function ProjectsPage() {

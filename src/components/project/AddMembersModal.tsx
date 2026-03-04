@@ -5,9 +5,14 @@ import api from "@/lib/api";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { fetchEmployees, addProjectMember } from "@/store/slices/projectSlice";
 import { ProjectMember, MemberRole } from "@/types/api";
+import { toast } from "sonner";
 import Avatar from "@/components/ui/Avatar";
 import Button from "@/components/ui/Button";
 import Badge from "@/components/ui/Badge";
+import Modal, { ModalBody, ModalFooter } from "@/components/ui/Modal";
+import Select from "@/components/ui/Select";
+import LoadingState from "@/components/ui/LoadingState";
+import Spinner from "@/components/ui/Spinner";
 
 interface Props {
   projectId: string;
@@ -28,7 +33,6 @@ export default function AddMembersModal({ projectId, projectName, onClose }: Pro
   const [membersLoading, setMembersLoading] = useState(true);
   const [selectedUserId, setSelectedUserId] = useState("");
   const [selectedRole, setSelectedRole] = useState<MemberRole>(3);
-  const [addError, setAddError] = useState<string | null>(null);
 
   useEffect(() => {
     if (employees.length === 0) dispatch(fetchEmployees());
@@ -46,7 +50,6 @@ export default function AddMembersModal({ projectId, projectName, onClose }: Pro
 
   const handleAdd = async () => {
     if (!selectedUserId) return;
-    setAddError(null);
 
     const result = await dispatch(
       addProjectMember({ projectId, user_id: selectedUserId, role: selectedRole })
@@ -57,43 +60,24 @@ export default function AddMembersModal({ projectId, projectName, onClose }: Pro
       setSelectedUserId("");
     } else {
       const err = result.payload as any;
-      setAddError(
-        typeof err === "string" ? err : err?.detail || "Failed to add member."
-      );
+      toast.error(typeof err === "string" ? err : err?.detail || "Failed to add member.");
     }
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-lg mx-4 max-h-[90vh] flex flex-col">
+    <Modal title="Manage Members" subtitle={projectName} onClose={onClose}>
+      <div className="flex flex-col flex-1 overflow-hidden">
+        <ModalBody>
 
-        {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 shrink-0">
-          <div>
-            <h2 className="text-base font-semibold text-gray-900">Manage Members</h2>
-            <p className="text-xs text-gray-400 mt-0.5">{projectName}</p>
-          </div>
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-gray-700 transition-colors text-xl leading-none"
-          >
-            ×
-          </button>
-        </div>
-
-        <div className="flex flex-col flex-1 overflow-hidden">
-          <div className="px-6 py-5 space-y-5 overflow-y-auto flex-1">
-
-            {/* Add member row */}
             <div>
               <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">
                 Add Member
               </p>
-              <div className="flex gap-2">
-                <select
+              <div className="flex flex-col gap-2">
+                {/* User selector — full width */}
+                <Select
                   value={selectedUserId}
                   onChange={(e) => setSelectedUserId(e.target.value)}
-                  className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 bg-white"
                 >
                   <option value="" disabled>
                     {employeesLoading
@@ -107,33 +91,38 @@ export default function AddMembersModal({ projectId, projectName, onClose }: Pro
                       {u.full_name} — {u.email}
                     </option>
                   ))}
-                </select>
+                </Select>
 
-                <select
-                  value={selectedRole}
-                  onChange={(e) => setSelectedRole(Number(e.target.value) as MemberRole)}
-                  className="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 bg-white"
-                >
-                  {ROLE_OPTIONS.map((r) => (
-                    <option key={r.value} value={r.value}>
-                      {r.label}
-                    </option>
-                  ))}
-                </select>
+                <div className="flex gap-2">
+                  <Select
+                    value={selectedRole}
+                    onChange={(e) => setSelectedRole(Number(e.target.value) as MemberRole)}
+                    className="flex-1"
+                  >
+                    {ROLE_OPTIONS.map((r) => (
+                      <option key={r.value} value={r.value}>
+                        {r.label}
+                      </option>
+                    ))}
+                  </Select>
 
-                <Button
-                  variant="primary"
-                  size="sm"
-                  onClick={handleAdd}
-                  disabled={!selectedUserId || submitting}
-                  type="button"
-                >
-                  {submitting ? "Adding…" : "Add"}
-                </Button>
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    onClick={handleAdd}
+                    disabled={!selectedUserId || submitting}
+                    type="button"
+                    className="shrink-0"
+                  >
+                    {submitting ? (
+                      <span className="flex items-center gap-1.5">
+                        <Spinner size="xs" className="border-white/50 border-t-white" />
+                        Adding…
+                      </span>
+                    ) : "Add Member"}
+                  </Button>
+                </div>
               </div>
-              {addError && (
-                <p className="mt-1 text-xs text-red-600">{addError}</p>
-              )}
             </div>
 
             {/* Current members */}
@@ -142,7 +131,7 @@ export default function AddMembersModal({ projectId, projectName, onClose }: Pro
                 Current Members ({members.length})
               </p>
               {membersLoading ? (
-                <p className="text-sm text-gray-400">Loading…</p>
+                <LoadingState message="Loading members…" size="sm" />
               ) : members.length === 0 ? (
                 <p className="text-sm text-gray-400">No members yet.</p>
               ) : (
@@ -167,16 +156,14 @@ export default function AddMembersModal({ projectId, projectName, onClose }: Pro
                 </ul>
               )}
             </div>
-          </div>
+        </ModalBody>
 
-          {/* Footer */}
-          <div className="flex justify-end px-6 py-4 border-t border-gray-100 shrink-0">
-            <Button variant="secondary" onClick={onClose} type="button">
-              Done
-            </Button>
-          </div>
-        </div>
+        <ModalFooter>
+          <Button variant="secondary" onClick={onClose} type="button">
+            Done
+          </Button>
+        </ModalFooter>
       </div>
-    </div>
+    </Modal>
   );
 }

@@ -5,6 +5,7 @@ import { Provider } from "react-redux";
 import { PersistGate } from "redux-persist/integration/react";
 import { GoogleOAuthProvider } from "@react-oauth/google";
 import { store, persistor } from "@/store";
+import { Toaster } from "sonner";
 import { registerAuthHandlers } from "@/lib/api";
 import { setAccessToken } from "@/lib/authToken";
 import { restoreSession, logout } from "@/store/slices/authSlice";
@@ -47,6 +48,7 @@ export default function Providers({
         <PersistGate loading={null} persistor={persistor}>
           <AuthBootstrap />
           {children}
+          <Toaster position="bottom-right" richColors closeButton />
         </PersistGate>
       </Provider>
     </GoogleOAuthProvider>

@@ -5,12 +5,13 @@ import { useRouter } from "next/navigation";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { login } from "@/store/slices/authSlice";
 import GoogleLoginButton from "@/components/auth/GoogleLoginButton";
+import { toast } from "sonner";
 
 export default function LoginPage() {
   const dispatch = useAppDispatch();
   const router = useRouter();
 
-  const { user, loading, error } = useAppSelector(state => state.auth);
+  const { user, loading } = useAppSelector(state => state.auth);
 
   useEffect(() => {
     console.log("user: ", user)
@@ -20,14 +21,18 @@ export default function LoginPage() {
     }
   }, [user]);
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     const formData = new FormData(e.currentTarget);
     const email = formData.get("email") as string;
     const password = formData.get("password") as string;
 
-    dispatch(login({ email, password }));
+    const result = await dispatch(login({ email, password }));
+    if (login.rejected.match(result)) {
+      const err = result.payload as any;
+      toast.error(typeof err === "string" ? err : err?.detail ?? "Login failed.");
+    }
   };
 
 
@@ -126,8 +131,6 @@ export default function LoginPage() {
               style={styles.input}
             />
           </div>
-
-          {error && <p style={styles.error}>{error}</p>}
 
           <button
             type="submit"
