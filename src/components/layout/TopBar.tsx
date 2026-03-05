@@ -27,8 +27,8 @@ export default function TopBar() {
       <div className="flex items-center gap-4">
         {/* Notification bell */}
         <button className="relative p-2 rounded-lg hover:bg-gray-100 transition-colors">
-          <span className="text-lg">🔔</span>
-          <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full" />
+          {/* <span className="text-lg">🔔</span> */}
+          {/* <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full" /> */}
         </button>
 
         {/* User */}

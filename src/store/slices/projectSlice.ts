@@ -1,6 +1,13 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import api from "@/lib/api";
-import { Project, ProjectState, CreateProjectPayload } from "@/types/api";
+import {
+  Project,
+  ProjectState,
+  CreateProjectPayload,
+  MemberUser,
+  ProjectMember,
+  AddMemberPayload,
+} from "@/types/api";
 
 export const fetchProjects = createAsyncThunk<Project[]>(
   "project/fetchProjects",
@@ -53,11 +60,48 @@ export const deleteProject = createAsyncThunk<string, string>(
   }
 );
 
+export const fetchEmployees = createAsyncThunk<MemberUser[]>(
+  "project/fetchEmployees",
+  async (_, { rejectWithValue }) => {
+    console.log("[Project] Fetching employees");
+    try {
+      const res = await api.get<MemberUser[]>("/accounts/users/");
+      console.log(`[Project] Fetched ${res.data.length} users`);
+      return res.data;
+    } catch (err: any) {
+      console.error("[Project] Failed to fetch users:", err.response?.data);
+      return rejectWithValue(
+        err.response?.data?.detail || "Failed to fetch users"
+      );
+    }
+  }
+);
+
+export const addProjectMember = createAsyncThunk<ProjectMember, AddMemberPayload>(
+  "project/addProjectMember",
+  async ({ projectId, user_id, role }, { rejectWithValue }) => {
+    console.log("[Project] Adding member to project:", projectId);
+    try {
+      const res = await api.post<ProjectMember>(
+        `/api/project/${projectId}/members/`,
+        { user_id, role }
+      );
+      console.log("[Project] Member added:", res.data.full_name);
+      return res.data;
+    } catch (err: any) {
+      console.error("[Project] Failed to add member:", err.response?.data);
+      return rejectWithValue(err.response?.data || "Failed to add member");
+    }
+  }
+);
+
 const initialState: ProjectState = {
   projects: [],
   loading: false,
   submitting: false,
   error: null,
+  employees: [],
+  employeesLoading: false,
 };
 
 const projectSlice = createSlice({
@@ -112,6 +156,32 @@ const projectSlice = createSlice({
       .addCase(deleteProject.rejected, (state, action) => {
         state.submitting = false;
         state.error = action.payload as string;
+      });
+
+    // fetchEmployees
+    builder
+      .addCase(fetchEmployees.pending, (state) => {
+        state.employeesLoading = true;
+      })
+      .addCase(fetchEmployees.fulfilled, (state, action) => {
+        state.employeesLoading = false;
+        state.employees = action.payload;
+      })
+      .addCase(fetchEmployees.rejected, (state) => {
+        state.employeesLoading = false;
+      });
+
+    // addProjectMember — no state change needed; modal manages its own member list
+    builder
+      .addCase(addProjectMember.pending, (state) => {
+        state.submitting = true;
+        state.error = null;
+      })
+      .addCase(addProjectMember.fulfilled, (state) => {
+        state.submitting = false;
+      })
+      .addCase(addProjectMember.rejected, (state) => {
+        state.submitting = false;
       });
   },
 });

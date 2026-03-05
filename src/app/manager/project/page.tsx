@@ -25,20 +25,26 @@ const statusVariant: Record<ProjectStatus, "info" | "warning" | "success" | "def
 const tabs: { label: string; value: ProjectStatus | "All" }[] = [
   { label: "All", value: "All" },
   { label: "Active", value: "Active" },
+  { label: "Draft", value: "Draft" },
+  { label: "Completed", value: "Completed" },
+  { label: "Archived", value: "Archived" },
 ];
 
-export default function ProjectsPage() {
+export default function ManagerProjectsPage() {
   const [activeTab, setActiveTab] = useState<ProjectStatus | "All">("All");
   const [search, setSearch] = useState("");
-  const [showModal, setShowModal] = useState(false);
+  const [showCreateModal, setShowCreateModal] = useState(false);
   const [memberProject, setMemberProject] = useState<Project | null>(null);
 
   const dispatch = useAppDispatch();
-  const { projects, loading } = useAppSelector(state => state.project);
-  const user = useAppSelector(state => state.auth.user);
-  const formTypes = useAppSelector(state => state.form.types);
+  const { projects } = useAppSelector((s) => s.project);
+  const formTypes = useAppSelector((s) => s.form.types);
 
-  const canCreate = user?.role === "Admin" || user?.role === "Manager";
+  const filtered = projects.filter((p) => {
+    const matchesTab = activeTab === "All" || p.status_display === activeTab;
+    const matchesSearch = p.name.toLowerCase().includes(search.toLowerCase());
+    return matchesTab && matchesSearch;
+  });
 
   const columns = [
     {
@@ -67,7 +73,7 @@ export default function ProjectsPage() {
       render: (p: Project) => (
         <div className="flex items-center gap-2">
           <Avatar name={p.created_by_name} size="sm" />
-          <span className="text-gray-700">{p.created_by_name}</span>
+          <span className="text-gray-700">{p.created_by_name ?? "—"}</span>
         </div>
       ),
     },
@@ -85,50 +91,26 @@ export default function ProjectsPage() {
       ),
     },
     {
-      key: "updated_at",
-      header: "Last Updated",
-      render: (p: Project) => (
-        <span className="text-gray-500 text-sm">
-          {new Date(p.updated_at).toLocaleDateString("en-US", {
-            month: "short",
-            day: "numeric",
-            year: "numeric",
-          })}
-        </span>
-      ),
-    },
-    {
       key: "actions",
       header: "",
       render: (p: Project) => (
         <div className="flex items-center gap-2 justify-end">
-          {canCreate && (
-            <Button variant="ghost" size="sm" onClick={() => setMemberProject(p)}>
-              Members
-            </Button>
-          )}
-          <Button variant="ghost" size="sm">View</Button>
+          <Button variant="ghost" size="sm" onClick={() => setMemberProject(p)}>
+            Members
+          </Button>
           <Button variant="secondary" size="sm">Edit</Button>
         </div>
       ),
     },
   ];
 
-  const filtered = projects.filter(p => {
-    const matchesTab = activeTab === "All" || p.status_display === activeTab;
-    const matchesSearch = p.name.toLowerCase().includes(search.toLowerCase());
-    return matchesTab && matchesSearch;
-  });
-
   useEffect(() => {
     dispatch(fetchProjects());
-    if (formTypes.length === 0) {
-      dispatch(fetchFormTypes());
-    }
+    if (formTypes.length === 0) dispatch(fetchFormTypes());
   }, [dispatch]);
 
-  const handleCloseModal = () => {
-    setShowModal(false);
+  const handleCloseCreate = () => {
+    setShowCreateModal(false);
     dispatch(clearProjectError());
   };
 
@@ -136,34 +118,30 @@ export default function ProjectsPage() {
     <>
       <PageHeader
         title="Projects"
-        description="Manage and track all translation projects."
+        description="Create and manage your translation projects."
         actions={
-          canCreate ? (
-            <Button variant="primary" size="md" onClick={() => setShowModal(true)}>
-              + New Project
-            </Button>
-          ) : undefined
+          <Button variant="primary" size="md" onClick={() => setShowCreateModal(true)}>
+            + New Project
+          </Button>
         }
       />
+
       <Card padding="none">
-        {/* Search + Tab filters */}
+        {/* Search + Tabs */}
         <div className="px-5 py-4 border-b border-gray-200 flex flex-col sm:flex-row sm:items-center gap-3">
-          {/* Search */}
           <input
             type="text"
             placeholder="Search projects..."
             value={search}
-            onChange={e => setSearch(e.target.value)}
+            onChange={(e) => setSearch(e.target.value)}
             className="w-full sm:w-64 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent"
           />
-
-          {/* Tabs */}
           <div className="flex items-center gap-1 flex-wrap">
-            {tabs.map(tab => {
+            {tabs.map((tab) => {
               const count =
                 tab.value === "All"
                   ? projects.length
-                  : projects.filter(p => p.status_display === tab.value).length;
+                  : projects.filter((p) => p.status_display === tab.value).length;
               const isActive = activeTab === tab.value;
               return (
                 <button
@@ -189,7 +167,6 @@ export default function ProjectsPage() {
           </div>
         </div>
 
-        {/* Table or Empty */}
         {filtered.length === 0 ? (
           <EmptyState
             title="No projects found"
@@ -200,16 +177,15 @@ export default function ProjectsPage() {
             }
           />
         ) : (
-          <Table columns={columns} data={filtered} keyExtractor={p => p.id} />
+          <Table columns={columns} data={filtered} keyExtractor={(p) => p.id} />
         )}
 
-        {/* Footer count */}
         <div className="px-5 py-3 border-t border-gray-100 text-xs text-gray-400">
           Showing {filtered.length} of {projects.length} projects
         </div>
       </Card>
 
-      {showModal && <CreateProjectModal onClose={handleCloseModal} />}
+      {showCreateModal && <CreateProjectModal onClose={handleCloseCreate} />}
       {memberProject && (
         <AddMembersModal
           projectId={memberProject.id}

@@ -2,6 +2,7 @@
 
 import { usePathname } from "next/navigation";
 import Link from "next/link";
+import { useAppSelector } from "@/store/hooks";
 
 interface NavItem {
   label: string;
@@ -9,16 +10,23 @@ interface NavItem {
   icon: string;
 }
 
-const navItems: NavItem[] = [
+const adminNav: NavItem[] = [
   { label: "Dashboard", href: "/admin/dashboard", icon: "📊" },
   { label: "Projects", href: "/admin/project", icon: "📁" },
   { label: "Forms", href: "/admin/forms", icon: "📝" },
-  { label: "Team", href: "/admin/dashboard/team", icon: "👥" },
+  { label: "Users", href: "/admin/users", icon: "👥" },
   { label: "Settings", href: "/admin/dashboard/settings", icon: "⚙️" },
+];
+
+const managerNav: NavItem[] = [
+  { label: "Projects", href: "/manager/project", icon: "📁" },
 ];
 
 export default function Sidebar() {
   const pathname = usePathname();
+  const role = useAppSelector((s) => s.auth.user?.role);
+
+  const navItems = role === "Manager" ? managerNav : adminNav;
 
   return (
     <aside className="fixed top-0 left-0 h-screen w-60 bg-gray-900 text-white flex flex-col">

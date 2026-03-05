@@ -6,7 +6,6 @@ import Button from "@/components/ui/Button";
 import StatCard from "@/components/dashboard/StatCard";
 import ProjectList from "@/components/dashboard/ProjectList";
 import ProjectTable from "@/components/dashboard/ProjectTable";
-import RecentActivity from "@/components/dashboard/RecentActivity";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { fetchProjects } from "@/store/slices/dashboadSlice";
 
@@ -45,30 +44,13 @@ export default function DashboardPage() {
           label="Active Projects"
           value={loading ? "..." : activeProjects.length}
           icon="🚀"
-        />
-        <StatCard
-          label="Completed"
-          value={loading ? "..." : completedProjects.length}
-          icon="✅"
-        />
-        <StatCard
-          label="Completion Rate"
-          value={
-            loading || projects.length === 0
-              ? "—"
-              : `${Math.round((completedProjects.length / projects.length) * 100)}%`
-          }
-          icon="📊"
-        />
+        />  
       </div>
 
       {/* Two-column: Table + Activity */}
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
         <div className="xl:col-span-2">
           <ProjectTable projects={projects} />
-        </div>
-        <div>
-          <RecentActivity />
         </div>
       </div>
     </>

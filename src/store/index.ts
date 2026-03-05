@@ -14,11 +14,12 @@ import authReducer from "./slices/authSlice";
 import dashboardReducer from "./slices/dashboadSlice";
 import projectReducer from "./slices/projectSlice";
 import formReducer from "./slices/formSlice";
+import usersReducer from "./slices/usersSlice";
 
 const authPersistConfig = {
   key: "auth",
   storage,
-  whitelist: ["user", "accessToken"], 
+  whitelist: ["user", "accessToken", "refreshToken"],
 };
 
 const rootReducer = combineReducers({
@@ -26,6 +27,7 @@ const rootReducer = combineReducers({
   dashboard: dashboardReducer,
   project: projectReducer,
   form: formReducer,
+  users: usersReducer,
 });
 
 export const store = configureStore({
