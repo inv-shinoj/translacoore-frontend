@@ -7,8 +7,8 @@ import { UserRole } from "@/types/user";
 export const roleHome: Record<UserRole, string> = {
   Admin: "/admin/dashboard",
   Manager: "/manager/project",
-  "Team Lead": "/admin/dashboard",
-  Employee: "/admin/dashboard",
+  "Team Lead": "/employee/project",
+  Employee: "/employee/project",
 };
 
 export function getRoleHome(role: UserRole): string {

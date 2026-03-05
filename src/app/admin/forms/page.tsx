@@ -9,6 +9,7 @@ import Table from "@/components/ui/Table";
 import EmptyState from "@/components/ui/EmptyState";
 import LoadingState from "@/components/ui/LoadingState";
 import FilterTabs, { FilterTab } from "@/components/ui/FilterTabs";
+import TableFooter from "@/components/ui/TableFooter";
 import UploadPanel from "@/components/forms/UploadPanel";
 import { FormSchema, FormTypeKey } from "@/types/api";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
@@ -174,9 +175,7 @@ export default function FormsPage() {
               <Table columns={columns} data={filtered} keyExtractor={s => s.id} />
             )}
 
-            <div className="px-5 py-3 border-t border-gray-100 text-xs text-gray-400">
-              Showing {filtered.length} of {schemas.length} schemas
-            </div>
+            <TableFooter shown={filtered.length} total={schemas.length} label="schemas" />
           </Card>
         </div>
       </div>

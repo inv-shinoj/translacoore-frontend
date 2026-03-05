@@ -3,35 +3,26 @@
 import { useEffect, useState } from "react";
 import PageHeader from "@/components/ui/PageHeader";
 import Button from "@/components/ui/Button";
-import Badge from "@/components/ui/Badge";
 import Card from "@/components/ui/Card";
 import Table from "@/components/ui/Table";
 import Avatar from "@/components/ui/Avatar";
+import TableToolbar from "@/components/ui/TableToolbar";
+import TableFooter from "@/components/ui/TableFooter";
 import EmptyState from "@/components/ui/EmptyState";
+import ProjectStatusBadge from "@/components/project/ProjectStatusBadge";
+import ProjectNameCell from "@/components/project/ProjectNameCell";
 import CreateProjectModal from "@/components/project/CreateProjectModal";
 import AddMembersModal from "@/components/project/AddMembersModal";
 import { Project, ProjectStatus } from "@/types/api";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { fetchProjects, clearProjectError } from "@/store/slices/projectSlice";
 import { fetchFormTypes } from "@/store/slices/formSlice";
+import { FilterTab } from "@/components/ui/FilterTabs";
 
-const statusVariant: Record<ProjectStatus, "info" | "warning" | "success" | "default"> = {
-  Active: "info",
-  Draft: "default",
-  Completed: "success",
-  Archived: "warning",
-};
-
-const tabs: { label: string; value: ProjectStatus | "All" }[] = [
-  { label: "All", value: "All" },
-  { label: "Active", value: "Active" },
-  { label: "Draft", value: "Draft" },
-  { label: "Completed", value: "Completed" },
-  { label: "Archived", value: "Archived" },
-];
+type TabValue = ProjectStatus | "All";
 
 export default function ManagerProjectsPage() {
-  const [activeTab, setActiveTab] = useState<ProjectStatus | "All">("All");
+  const [activeTab, setActiveTab] = useState<TabValue>("All");
   const [search, setSearch] = useState("");
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [memberProject, setMemberProject] = useState<Project | null>(null);
@@ -39,6 +30,14 @@ export default function ManagerProjectsPage() {
   const dispatch = useAppDispatch();
   const { projects } = useAppSelector((s) => s.project);
   const formTypes = useAppSelector((s) => s.form.types);
+
+  const tabs: FilterTab<TabValue>[] = [
+    { key: "All", label: "All", count: projects.length },
+    { key: "Active", label: "Active", count: projects.filter((p) => p.status_display === "Active").length },
+    { key: "Draft", label: "Draft", count: projects.filter((p) => p.status_display === "Draft").length },
+    { key: "Completed", label: "Completed", count: projects.filter((p) => p.status_display === "Completed").length },
+    { key: "Archived", label: "Archived", count: projects.filter((p) => p.status_display === "Archived").length },
+  ];
 
   const filtered = projects.filter((p) => {
     const matchesTab = activeTab === "All" || p.status_display === activeTab;
@@ -50,22 +49,12 @@ export default function ManagerProjectsPage() {
     {
       key: "name",
       header: "Project",
-      render: (p: Project) => (
-        <div className="flex items-center gap-3">
-          <Avatar name={p.name} size="sm" />
-          <div>
-            <p className="font-medium text-gray-900">{p.name}</p>
-            <p className="text-xs text-gray-400">{p.form_type_name}</p>
-          </div>
-        </div>
-      ),
+      render: (p: Project) => <ProjectNameCell name={p.name} subtitle={p.form_type_name} />,
     },
     {
       key: "status",
       header: "Status",
-      render: (p: Project) => (
-        <Badge variant={statusVariant[p.status_display]}>{p.status_display}</Badge>
-      ),
+      render: (p: Project) => <ProjectStatusBadge status={p.status_display} />,
     },
     {
       key: "created_by_name",
@@ -82,11 +71,7 @@ export default function ManagerProjectsPage() {
       header: "Created",
       render: (p: Project) => (
         <span className="text-gray-500 text-sm">
-          {new Date(p.created_at).toLocaleDateString("en-US", {
-            month: "short",
-            day: "numeric",
-            year: "numeric",
-          })}
+          {new Date(p.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
         </span>
       ),
     },
@@ -109,11 +94,6 @@ export default function ManagerProjectsPage() {
     if (formTypes.length === 0) dispatch(fetchFormTypes());
   }, [dispatch]);
 
-  const handleCloseCreate = () => {
-    setShowCreateModal(false);
-    dispatch(clearProjectError());
-  };
-
   return (
     <>
       <PageHeader
@@ -127,65 +107,30 @@ export default function ManagerProjectsPage() {
       />
 
       <Card padding="none">
-        {/* Search + Tabs */}
-        <div className="px-5 py-4 border-b border-gray-200 flex flex-col sm:flex-row sm:items-center gap-3">
-          <input
-            type="text"
-            placeholder="Search projects..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full sm:w-64 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent"
-          />
-          <div className="flex items-center gap-1 flex-wrap">
-            {tabs.map((tab) => {
-              const count =
-                tab.value === "All"
-                  ? projects.length
-                  : projects.filter((p) => p.status_display === tab.value).length;
-              const isActive = activeTab === tab.value;
-              return (
-                <button
-                  key={tab.value}
-                  onClick={() => setActiveTab(tab.value)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                    isActive
-                      ? "bg-gray-900 text-white"
-                      : "text-gray-500 hover:text-gray-900 hover:bg-gray-100"
-                  }`}
-                >
-                  {tab.label}
-                  <span
-                    className={`ml-1.5 px-1.5 py-0.5 rounded-full text-xs ${
-                      isActive ? "bg-white/20 text-white" : "bg-gray-100 text-gray-500"
-                    }`}
-                  >
-                    {count}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-        </div>
+        <TableToolbar
+          search={search}
+          onSearch={setSearch}
+          searchPlaceholder="Search projects..."
+          tabs={tabs}
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
+        />
 
         {filtered.length === 0 ? (
           <EmptyState
             title="No projects found"
-            description={
-              search
-                ? `No projects match "${search}"`
-                : `No ${activeTab.toLowerCase()} projects yet.`
-            }
+            description={search ? `No projects match "${search}"` : `No ${activeTab.toLowerCase()} projects yet.`}
           />
         ) : (
           <Table columns={columns} data={filtered} keyExtractor={(p) => p.id} />
         )}
 
-        <div className="px-5 py-3 border-t border-gray-100 text-xs text-gray-400">
-          Showing {filtered.length} of {projects.length} projects
-        </div>
+        <TableFooter shown={filtered.length} total={projects.length} label="projects" />
       </Card>
 
-      {showCreateModal && <CreateProjectModal onClose={handleCloseCreate} />}
+      {showCreateModal && (
+        <CreateProjectModal onClose={() => { setShowCreateModal(false); dispatch(clearProjectError()); }} />
+      )}
       {memberProject && (
         <AddMembersModal
           projectId={memberProject.id}

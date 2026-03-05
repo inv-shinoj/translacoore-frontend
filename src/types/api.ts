@@ -5,15 +5,21 @@ export interface ApiError {
 
 export type ProjectStatus = "Draft" | "Active" | "Completed" | "Archived";
 
-export interface  Project {
+export interface Project {
   id: string;
   name: string;
   status: number;
   status_display: ProjectStatus;
   form_type_name: string;
   created_by_name: string | null;
+  my_role: string | null;
   created_at: string;
   updated_at: string;
+}
+
+export interface ProjectDetail extends Project {
+  project_data: Record<string, any>;
+  schema_fields: SchemaField[];
 }
 
 export interface DashboardState {
@@ -35,6 +41,8 @@ export interface ProjectState {
   error: string | null;
   employees: MemberUser[];
   employeesLoading: boolean;
+  currentProject: ProjectDetail | null;
+  currentProjectLoading: boolean;
 }
 
 export type MemberRole = 2 | 3; // 2 = Lead, 3 = Employee
