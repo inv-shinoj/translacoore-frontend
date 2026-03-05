@@ -4,18 +4,12 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAppSelector } from "@/store/hooks";
 import { UserRole } from "@/types/user";
+import { getRoleHome } from "@/lib/roleHome";
 
 interface Props {
   allowedRoles: UserRole[];
   children: React.ReactNode;
 }
-
-const roleHome: Record<UserRole, string> = {
-  Admin: "/admin/dashboard",
-  Manager: "/manager/project",
-  "Team Lead": "/admin/dashboard",
-  Employee: "/admin/dashboard",
-};
 
 export default function RoleGuard({ allowedRoles, children }: Props) {
   const router = useRouter();
@@ -28,7 +22,7 @@ export default function RoleGuard({ allowedRoles, children }: Props) {
     if (!isRehydrated || !user) return;
     if (!allowedRoles.includes(user.role)) {
       console.log(`[RoleGuard] Role "${user.role}" not allowed — redirecting`);
-      router.replace(roleHome[user.role] ?? "/login");
+      router.replace(getRoleHome(user.role));
     }
   }, [user, isRehydrated]);
 

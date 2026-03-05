@@ -14,7 +14,7 @@ const adminNav: NavItem[] = [
   { label: "Dashboard", href: "/admin/dashboard", icon: "📊" },
   { label: "Projects", href: "/admin/project", icon: "📁" },
   { label: "Forms", href: "/admin/forms", icon: "📝" },
-  { label: "Team", href: "/admin/dashboard/team", icon: "👥" },
+  { label: "Users", href: "/admin/users", icon: "👥" },
   { label: "Settings", href: "/admin/dashboard/settings", icon: "⚙️" },
 ];
 

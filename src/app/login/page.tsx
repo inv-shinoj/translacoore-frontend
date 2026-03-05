@@ -6,6 +6,7 @@ import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { login } from "@/store/slices/authSlice";
 import GoogleLoginButton from "@/components/auth/GoogleLoginButton";
 import { toast } from "sonner";
+import { getRoleHome } from "@/lib/roleHome";
 
 export default function LoginPage() {
   const dispatch = useAppDispatch();
@@ -14,9 +15,9 @@ export default function LoginPage() {
   const { user, loading } = useAppSelector(state => state.auth);
 
   useEffect(() => {
-    console.log("user: ", user)
     if (user) {
-      const dest = user.role === "Manager" ? "/manager/project" : "/admin/dashboard";
+      const dest = getRoleHome(user.role);
+      console.log(`[Login] Role "${user.role}" → redirecting to ${dest}`);
       router.replace(dest);
     }
   }, [user]);
