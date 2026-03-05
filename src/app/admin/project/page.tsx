@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import PageHeader from "@/components/ui/PageHeader";
 import Button from "@/components/ui/Button";
 import Card from "@/components/ui/Card";
@@ -26,6 +27,7 @@ export default function ProjectsPage() {
   const [search, setSearch] = useState("");
   const [showModal, setShowModal] = useState(false);
   const [memberProject, setMemberProject] = useState<Project | null>(null);
+  const router = useRouter();
 
   const dispatch = useAppDispatch();
   const { projects, loading } = useAppSelector((state) => state.project);
@@ -93,7 +95,7 @@ export default function ProjectsPage() {
               Members
             </Button>
           )}
-          <Button variant="ghost" size="sm">View</Button>
+          <Button variant="ghost" size="sm" onClick={() => router.push(`/admin/project/${p.id}`)}>View</Button>
           <Button variant="secondary" size="sm">Edit</Button>
         </div>
       ),

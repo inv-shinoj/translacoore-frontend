@@ -13,7 +13,7 @@ import MetaCard from "@/components/ui/MetaCard";
 import DocumentUploadPanel from "@/components/project/DocumentUploadPanel";
 import DocumentList from "@/components/project/DocumentList";
 
-export default function EmployeeProjectDetailPage() {
+export default function ManagerProjectDetailPage() {
   const { id } = useParams<{ id: string }>();
   const dispatch = useAppDispatch();
   const router = useRouter();
@@ -44,9 +44,6 @@ export default function EmployeeProjectDetailPage() {
         description={`${project.form_type_name} · Created by ${project.created_by_name ?? "—"}`}
         actions={
           <div className="flex items-center gap-2">
-            {project.my_role && (
-              <Badge variant="info">Your role: {project.my_role}</Badge>
-            )}
             <ProjectStatusBadge status={project.status_display} />
             <Button variant="secondary" size="sm" onClick={() => router.back()}>
               ← Back
@@ -106,7 +103,7 @@ export default function EmployeeProjectDetailPage() {
       {/* ── Documents section ─────────────────── */}
       <div className="mt-6 space-y-4">
         <DocumentUploadPanel projectId={project.id} />
-        <DocumentList projectId={project.id} />
+        <DocumentList projectId={project.id} canDelete />
       </div>
     </>
   );

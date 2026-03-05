@@ -113,3 +113,35 @@ export interface FormState {
   submitting: boolean;
   error: string | null;
 }
+
+// ── Documents ────────────────────────────────────────────────
+
+export type DocumentStatus = "Uploaded" | "Translating" | "Completed" | "Failed";
+export type FileTypeDisplay = "txt" | "pdf" | "docx" | "xlsx";
+
+export interface DocumentFile {
+  id: string;
+  original_filename: string;
+  file_type: number;
+  file_type_display: FileTypeDisplay;
+  source_language: string;
+  target_language: string;
+  status: number;
+  status_display: DocumentStatus;
+  file_size: number;
+  page_count: number | null;
+  uploaded_by_name: string;
+  error_message?: string;
+  source_download_url: string | null;
+  translated_download_url: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface DocumentsState {
+  documents: DocumentFile[];
+  loading: boolean;
+  uploading: boolean;
+  error: string | null;
+}
+
