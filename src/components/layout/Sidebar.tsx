@@ -22,11 +22,20 @@ const managerNav: NavItem[] = [
   { label: "Projects", href: "/manager/project", icon: "📁" },
 ];
 
+const employeeNav: NavItem[] = [
+  { label: "My Projects", href: "/employee/project", icon: "📁" },
+];
+
 export default function Sidebar() {
   const pathname = usePathname();
   const role = useAppSelector((s) => s.auth.user?.role);
 
-  const navItems = role === "Manager" ? managerNav : adminNav;
+  const navItems =
+    role === "Manager"
+      ? managerNav
+      : role === "Team Lead" || role === "Employee"
+      ? employeeNav
+      : adminNav;
 
   return (
     <aside className="fixed top-0 left-0 h-screen w-60 bg-gray-900 text-white flex flex-col">

@@ -9,6 +9,9 @@ import PageHeader from "@/components/ui/PageHeader";
 import Button from "@/components/ui/Button";
 import Badge from "@/components/ui/Badge";
 import Avatar from "@/components/ui/Avatar";
+import Card from "@/components/ui/Card";
+import Table from "@/components/ui/Table";
+import Alert from "@/components/ui/Alert";
 import LoadingState from "@/components/ui/LoadingState";
 import EmptyState from "@/components/ui/EmptyState";
 import CreateUserModal from "@/components/users/CreateUserModal";
@@ -68,6 +71,88 @@ export default function UsersPage() {
 
   const isAdmin = currentUser?.role === "Admin";
 
+  const columns = [
+    {
+      key: "name",
+      header: "User",
+      render: (user: User) => (
+        <div className="flex items-center gap-3">
+          <Avatar name={user.full_name ?? user.email} size="sm" />
+          <span className="font-medium text-gray-900">{user.full_name ?? "—"}</span>
+        </div>
+      ),
+    },
+    {
+      key: "email",
+      header: "Email",
+      render: (user: User) => <span className="text-gray-500">{user.email}</span>,
+    },
+    {
+      key: "role",
+      header: "Role",
+      render: (user: User) =>
+        isAdmin ? (
+          <select
+            value={ROLE_OPTIONS.find((r) => r.label === user.role)?.value ?? 4}
+            onChange={(e) => handleRoleChange(user, Number(e.target.value))}
+            disabled={!user.is_active}
+            className="rounded-md border border-gray-200 px-2 py-1 text-xs text-gray-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {ROLE_OPTIONS.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
+        ) : (
+          <Badge variant={roleBadgeVariant[user.role] ?? "default"}>
+            {user.role}
+          </Badge>
+        ),
+    },
+    {
+      key: "status",
+      header: "Status",
+      render: (user: User) => (
+        <Badge variant={user.is_active ? "success" : "default"}>
+          {user.is_active ? "Active" : "Inactive"}
+        </Badge>
+      ),
+    },
+    ...(isAdmin
+      ? [
+          {
+            key: "actions",
+            header: "",
+            render: (user: User) =>
+              user.is_active ? (
+                <div className="flex justify-end">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-red-500 hover:bg-red-50 hover:text-red-700"
+                    onClick={() => handleDeactivate(user)}
+                  >
+                    Deactivate
+                  </Button>
+                </div>
+              ) : (
+                <div className="flex justify-end">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700"
+                    onClick={() => handleActivate(user)}
+                  >
+                    Activate
+                  </Button>
+                </div>
+              ),
+          },
+        ]
+      : []),
+  ];
+
   return (
     <>
       <PageHeader
@@ -82,11 +167,7 @@ export default function UsersPage() {
 
       {loading && <LoadingState message="Loading users…" />}
 
-      {!loading && error && (
-        <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-          {error}
-        </div>
-      )}
+      {!loading && error && <Alert variant="error">{error}</Alert>}
 
       {!loading && !error && users.length === 0 && (
         <EmptyState
@@ -96,84 +177,9 @@ export default function UsersPage() {
       )}
 
       {!loading && users.length > 0 && (
-        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-          <table className="w-full text-sm">
-            <thead className="bg-gray-50 border-b border-gray-200">
-              <tr>
-                <th className="px-4 py-3 text-left font-medium text-gray-500">User</th>
-                <th className="px-4 py-3 text-left font-medium text-gray-500">Email</th>
-                <th className="px-4 py-3 text-left font-medium text-gray-500">Role</th>
-                <th className="px-4 py-3 text-left font-medium text-gray-500">Status</th>
-                {isAdmin && (
-                  <th className="px-4 py-3 text-right font-medium text-gray-500">Actions</th>
-                )}
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
-              {users.map((user) => (
-                <tr key={user.id} className="hover:bg-gray-50 transition-colors">
-                  <td className="px-4 py-3">
-                    <div className="flex items-center gap-3">
-                      <Avatar name={user.full_name ?? user.email} size="sm" />
-                      <span className="font-medium text-gray-900">
-                        {user.full_name ?? "—"}
-                      </span>
-                    </div>
-                  </td>
-                  <td className="px-4 py-3 text-gray-500">{user.email}</td>
-                  <td className="px-4 py-3">
-                    {isAdmin ? (
-                      <select
-                        value={ROLE_OPTIONS.find((r) => r.label === user.role)?.value ?? 4}
-                        onChange={(e) => handleRoleChange(user, Number(e.target.value))}
-                        disabled={!user.is_active}
-                        className="rounded-md border border-gray-200 px-2 py-1 text-xs text-gray-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        {ROLE_OPTIONS.map((opt) => (
-                          <option key={opt.value} value={opt.value}>
-                            {opt.label}
-                          </option>
-                        ))}
-                      </select>
-                    ) : (
-                      <Badge variant={roleBadgeVariant[user.role] ?? "default"}>
-                        {user.role}
-                      </Badge>
-                    )}
-                  </td>
-                  <td className="px-4 py-3">
-                    <Badge variant={user.is_active ? "success" : "default"}>
-                      {user.is_active ? "Active" : "Inactive"}
-                    </Badge>
-                  </td>
-                  {isAdmin && (
-                    <td className="px-4 py-3 text-right">
-                      {user.is_active ? (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="text-red-500 hover:bg-red-50 hover:text-red-700"
-                          onClick={() => handleDeactivate(user)}
-                        >
-                          Deactivate
-                        </Button>
-                      ) : (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700"
-                          onClick={() => handleActivate(user)}
-                        >
-                          Activate
-                        </Button>
-                      )}
-                    </td>
-                  )}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <Card padding="none">
+          <Table columns={columns} data={users} keyExtractor={(u) => u.id} />
+        </Card>
       )}
 
       {showCreate && <CreateUserModal onClose={() => setShowCreate(false)} />}

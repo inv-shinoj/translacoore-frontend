@@ -2,6 +2,7 @@ import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import api from "@/lib/api";
 import {
   Project,
+  ProjectDetail,
   ProjectState,
   CreateProjectPayload,
   MemberUser,
@@ -95,6 +96,20 @@ export const addProjectMember = createAsyncThunk<ProjectMember, AddMemberPayload
   }
 );
 
+export const fetchProjectDetail = createAsyncThunk<ProjectDetail, string>(
+  "project/fetchDetail",
+  async (id, { rejectWithValue }) => {
+    try {
+      const res = await api.get<ProjectDetail>(`/api/project/${id}/`);
+      return res.data;
+    } catch (err: any) {
+      return rejectWithValue(
+        err.response?.data?.detail || "Failed to fetch project"
+      );
+    }
+  }
+);
+
 const initialState: ProjectState = {
   projects: [],
   loading: false,
@@ -102,6 +117,8 @@ const initialState: ProjectState = {
   error: null,
   employees: [],
   employeesLoading: false,
+  currentProject: null,
+  currentProjectLoading: false,
 };
 
 const projectSlice = createSlice({
@@ -182,6 +199,22 @@ const projectSlice = createSlice({
       })
       .addCase(addProjectMember.rejected, (state) => {
         state.submitting = false;
+      });
+
+    // fetchProjectDetail
+    builder
+      .addCase(fetchProjectDetail.pending, (state) => {
+        state.currentProjectLoading = true;
+        state.currentProject = null;
+        state.error = null;
+      })
+      .addCase(fetchProjectDetail.fulfilled, (state, action) => {
+        state.currentProjectLoading = false;
+        state.currentProject = action.payload;
+      })
+      .addCase(fetchProjectDetail.rejected, (state, action) => {
+        state.currentProjectLoading = false;
+        state.error = action.payload as string;
       });
   },
 });
