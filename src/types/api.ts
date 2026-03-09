@@ -41,6 +41,7 @@ export interface ProjectState {
   error: string | null;
   employees: MemberUser[];
   employeesLoading: boolean;
+  employeesError: string | null;
   currentProject: ProjectDetail | null;
   currentProjectLoading: boolean;
 }
@@ -67,6 +68,12 @@ export interface ProjectMember {
 export interface AddMemberPayload {
   projectId: string;
   user_id: string;
+  role: MemberRole;
+}
+
+export interface UpdateMemberRolePayload {
+  projectId: string;
+  memberId: number;
   role: MemberRole;
 }
 

@@ -7,12 +7,14 @@ import {
   fetchEmployees,
   addProjectMember,
   removeProjectMember,
+  updateProjectMemberRole,
 } from "@/store/slices/projectSlice";
 import { ProjectMember, MemberRole } from "@/types/api";
 import { toast } from "sonner";
 import Avatar from "@/components/ui/Avatar";
 import Button from "@/components/ui/Button";
 import Badge from "@/components/ui/Badge";
+import Alert from "@/components/ui/Alert";
 import Modal, { ModalBody, ModalFooter } from "@/components/ui/Modal";
 import Select from "@/components/ui/Select";
 import LoadingState from "@/components/ui/LoadingState";
@@ -31,23 +33,36 @@ const ROLE_OPTIONS: { value: MemberRole; label: string }[] = [
 
 export default function AddMembersModal({ projectId, projectName, onClose }: Props) {
   const dispatch = useAppDispatch();
-  const { employees, employeesLoading, submitting } = useAppSelector((s) => s.project);
+  const { employees, employeesLoading, employeesError, submitting } = useAppSelector((s) => s.project);
 
   const [members, setMembers] = useState<ProjectMember[]>([]);
   const [membersLoading, setMembersLoading] = useState(true);
+  const [membersError, setMembersError] = useState<string | null>(null);
   const [selectedUserId, setSelectedUserId] = useState("");
   const [selectedRole, setSelectedRole] = useState<MemberRole>(3);
   const [removingMemberId, setRemovingMemberId] = useState<number | null>(null);
+  const [updatingMemberId, setUpdatingMemberId] = useState<number | null>(null);
+
+  const loadMembers = async () => {
+    setMembersLoading(true);
+    setMembersError(null);
+
+    try {
+      const res = await api.get<ProjectMember[]>(`/api/project/${projectId}/members/`);
+      setMembers(res.data);
+    } catch (err: any) {
+      setMembersError(err?.response?.data?.detail ?? "Failed to load current project members.");
+    } finally {
+      setMembersLoading(false);
+    }
+  };
 
   useEffect(() => {
-    if (employees.length === 0) dispatch(fetchEmployees());
-
-    api
-      .get<ProjectMember[]>(`/api/project/${projectId}/members/`)
-      .then((res) => setMembers(res.data))
-      .catch(() => {})
-      .finally(() => setMembersLoading(false));
-  }, []);
+    if (employees.length === 0) {
+      dispatch(fetchEmployees());
+    }
+    loadMembers();
+  }, [dispatch, employees.length, projectId]);
 
   // Exclude users already in the project (match by email)
   const existingEmails = new Set(members.map((m) => m.email));
@@ -56,32 +71,90 @@ export default function AddMembersModal({ projectId, projectName, onClose }: Pro
   const handleAdd = async () => {
     if (!selectedUserId) return;
 
+    const selectedUser = employees.find((employee) => employee.id === selectedUserId);
+    const tempId = -Date.now();
+
+    const optimisticMember: ProjectMember = {
+      id: tempId,
+      full_name: selectedUser?.full_name ?? "New Member",
+      email: selectedUser?.email ?? "",
+      role: selectedRole,
+      role_display: selectedRole === 2 ? "Lead" : "Employee",
+      assigned_at: new Date().toISOString(),
+    };
+
+    setMembers((prev) => [...prev, optimisticMember]);
+    setSelectedUserId("");
+
     const result = await dispatch(
       addProjectMember({ projectId, user_id: selectedUserId, role: selectedRole })
     );
 
     if (addProjectMember.fulfilled.match(result)) {
-      setMembers((prev) => [...prev, result.payload]);
-      setSelectedUserId("");
+      setMembers((prev) => prev.map((member) => (member.id === tempId ? result.payload : member)));
     } else {
+      setMembers((prev) => prev.filter((member) => member.id !== tempId));
       const err = result.payload as any;
       toast.error(typeof err === "string" ? err : err?.detail || "Failed to add member.");
     }
   };
 
   const handleRemove = async (memberId: number) => {
+    const removedMember = members.find((member) => member.id === memberId);
+    if (!removedMember) return;
+
     setRemovingMemberId(memberId);
+    setMembers((prev) => prev.filter((member) => member.id !== memberId));
 
     const result = await dispatch(removeProjectMember({ projectId, memberId }));
 
-    if (removeProjectMember.fulfilled.match(result)) {
-      setMembers((prev) => prev.filter((member) => member.id !== memberId));
-    } else {
+    if (!removeProjectMember.fulfilled.match(result)) {
+      setMembers((prev) => {
+        if (prev.some((member) => member.id === removedMember.id)) return prev;
+        return [...prev, removedMember];
+      });
       const err = result.payload as any;
       toast.error(typeof err === "string" ? err : err?.detail || "Failed to remove member.");
     }
 
     setRemovingMemberId(null);
+  };
+
+  const handleRoleChange = async (memberId: number, nextRole: MemberRole) => {
+    const existingMember = members.find((member) => member.id === memberId);
+    if (!existingMember || existingMember.role === nextRole) return;
+
+    setUpdatingMemberId(memberId);
+
+    setMembers((prev) =>
+      prev.map((member) =>
+        member.id === memberId
+          ? {
+              ...member,
+              role: nextRole,
+              role_display: nextRole === 2 ? "Lead" : "Employee",
+            }
+          : member
+      )
+    );
+
+    const result = await dispatch(
+      updateProjectMemberRole({ projectId, memberId, role: nextRole })
+    );
+
+    if (updateProjectMemberRole.fulfilled.match(result)) {
+      setMembers((prev) =>
+        prev.map((member) => (member.id === memberId ? result.payload : member))
+      );
+    } else {
+      setMembers((prev) =>
+        prev.map((member) => (member.id === memberId ? existingMember : member))
+      );
+      const err = result.payload as any;
+      toast.error(typeof err === "string" ? err : err?.detail || "Failed to update member role.");
+    }
+
+    setUpdatingMemberId(null);
   };
 
   return (
@@ -94,6 +167,7 @@ export default function AddMembersModal({ projectId, projectName, onClose }: Pro
                 Add Member
               </p>
               <div className="flex flex-col gap-2">
+                {employeesError && <Alert variant="error">{employeesError}</Alert>}
                 {/* User selector — full width */}
                 <Select
                   value={selectedUserId}
@@ -152,6 +226,13 @@ export default function AddMembersModal({ projectId, projectName, onClose }: Pro
               </p>
               {membersLoading ? (
                 <LoadingState message="Loading members…" size="sm" />
+              ) : membersError ? (
+                <div className="space-y-2">
+                  <Alert variant="error">{membersError}</Alert>
+                  <Button type="button" variant="secondary" size="sm" onClick={loadMembers}>
+                    Retry
+                  </Button>
+                </div>
               ) : members.length === 0 ? (
                 <p className="text-sm text-gray-400">No members yet.</p>
               ) : (
@@ -171,13 +252,32 @@ export default function AddMembersModal({ projectId, projectName, onClose }: Pro
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-1.5">
+                          <Select
+                            value={m.role}
+                            onChange={(e) =>
+                              handleRoleChange(m.id, Number(e.target.value) as MemberRole)
+                            }
+                            disabled={submitting || removingMemberId === m.id || updatingMemberId === m.id}
+                            className="min-w-[120px]"
+                          >
+                            {ROLE_OPTIONS.map((r) => (
+                              <option key={r.value} value={r.value}>
+                                {r.label}
+                              </option>
+                            ))}
+                          </Select>
+                          {updatingMemberId === m.id && (
+                            <Spinner size="xs" />
+                          )}
+                        </div>
                         <Badge variant="default">{m.role_display}</Badge>
                         <Button
                           type="button"
                           variant="ghost"
                           size="sm"
                           onClick={() => handleRemove(m.id)}
-                          disabled={submitting || removingMemberId === m.id}
+                          disabled={submitting || removingMemberId === m.id || updatingMemberId === m.id}
                         >
                           {removingMemberId === m.id ? "Removing…" : "Remove"}
                         </Button>
