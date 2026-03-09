@@ -8,7 +8,7 @@ import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { uploadDocument } from "@/store/slices/documentsSlice";
 import { toast } from "sonner";
 
-const ALLOWED_EXTENSIONS = [".txt", ".pdf", ".docx", ".xlsx"];
+const ALLOWED_EXTENSIONS = [".txt", ".pdf", ".docx", ".xlsx", ".csv"];
 const MAX_SIZE = 10 * 1024 * 1024; // 10 MB
 
 interface DocumentUploadPanelProps {
@@ -77,7 +77,7 @@ export default function DocumentUploadPanel({ projectId }: DocumentUploadPanelPr
     <Card>
       <h2 className="text-sm font-semibold text-gray-900 mb-3">Upload Document</h2>
       <p className="text-xs text-gray-500 mb-4">
-        Upload a file to translate. Supported: TXT, PDF, DOCX, XLSX (max 10 MB).
+        Upload a file to translate. Supported: TXT, PDF, DOCX, XLSX, CSV (max 10 MB).
         <br />
         Translation: Japanese → English (synchronous — please wait for completion).
       </p>

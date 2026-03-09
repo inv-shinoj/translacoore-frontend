@@ -140,8 +140,10 @@ export interface DocumentFile {
 
 export interface DocumentsState {
   documents: DocumentFile[];
+  currentProjectId: string | null; // tracks which project's docs are loaded
   loading: boolean;
   uploading: boolean;
+  retrying: string[];   // doc IDs currently being retried
   error: string | null;
 }
 

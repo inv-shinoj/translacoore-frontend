@@ -66,12 +66,35 @@ export const deleteDocument = createAsyncThunk<
   }
 );
 
+export const retryDocument = createAsyncThunk<
+  DocumentFile,
+  { projectId: string; docId: string }
+>(
+  "documents/retry",
+  async ({ projectId, docId }, { rejectWithValue }) => {
+    try {
+      const res = await api.post<DocumentFile>(
+        `/api/project/${projectId}/documents/${docId}/retry/`,
+        {},
+        { timeout: 300_000 } // same as upload — translation can be slow
+      );
+      return res.data;
+    } catch (err: any) {
+      return rejectWithValue(
+        err.response?.data?.detail ?? "Retry failed"
+      );
+    }
+  }
+);
+
 // ── Slice ─────────────────────────────────────────────────────────────────────
 
 const initialState: DocumentsState = {
   documents: [],
+  currentProjectId: null,
   loading: false,
   uploading: false,
+  retrying: [],
   error: null,
 };
 
@@ -89,15 +112,20 @@ const documentsSlice = createSlice({
   extraReducers: (builder) => {
     // fetchDocuments
     builder
-      .addCase(fetchDocuments.pending, (state) => {
+      .addCase(fetchDocuments.pending, (state, action) => {
         state.loading = true;
         state.error = null;
+        state.currentProjectId = action.meta.arg; // record which project is being fetched
+        state.documents = [];                      // clear immediately — no stale flash
       })
       .addCase(fetchDocuments.fulfilled, (state, action) => {
+        // Discard if the user navigated away before this response arrived
+        if (action.meta.arg !== state.currentProjectId) return;
         state.loading = false;
         state.documents = action.payload;
       })
       .addCase(fetchDocuments.rejected, (state, action) => {
+        if (action.meta.arg !== state.currentProjectId) return;
         state.loading = false;
         state.error = action.payload as string;
       });
@@ -126,6 +154,22 @@ const documentsSlice = createSlice({
         state.documents = state.documents.filter((d) => d.id !== action.payload);
       })
       .addCase(deleteDocument.rejected, (state, action) => {
+        state.error = action.payload as string;
+      });
+
+    // retryDocument
+    builder
+      .addCase(retryDocument.pending, (state, action) => {
+        state.retrying.push(action.meta.arg.docId);
+        state.error = null;
+      })
+      .addCase(retryDocument.fulfilled, (state, action) => {
+        state.retrying = state.retrying.filter((id) => id !== action.payload.id);
+        const idx = state.documents.findIndex((d) => d.id === action.payload.id);
+        if (idx !== -1) state.documents[idx] = action.payload;
+      })
+      .addCase(retryDocument.rejected, (state, action) => {
+        state.retrying = state.retrying.filter((id) => id !== action.meta.arg.docId);
         state.error = action.payload as string;
       });
   },

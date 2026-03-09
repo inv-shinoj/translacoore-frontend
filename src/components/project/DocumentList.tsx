@@ -8,7 +8,7 @@ import Button from "@/components/ui/Button";
 import Spinner from "@/components/ui/Spinner";
 import DocumentStatusBadge from "@/components/project/DocumentStatusBadge";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
-import { fetchDocuments, deleteDocument } from "@/store/slices/documentsSlice";
+import { fetchDocuments, deleteDocument, retryDocument } from "@/store/slices/documentsSlice";
 import { DocumentFile } from "@/types/api";
 import { toast } from "sonner";
 
@@ -25,11 +25,20 @@ function formatBytes(bytes: number): string {
 
 export default function DocumentList({ projectId, canDelete = false }: DocumentListProps) {
   const dispatch = useAppDispatch();
-  const { documents, loading } = useAppSelector((s) => s.documents);
+  const { documents, loading, retrying } = useAppSelector((s) => s.documents);
 
   useEffect(() => {
     if (projectId) dispatch(fetchDocuments(projectId));
   }, [projectId, dispatch]);
+
+  const handleRetry = async (docId: string, filename: string) => {
+    const result = await dispatch(retryDocument({ projectId, docId }));
+    if (retryDocument.fulfilled.match(result)) {
+      toast.success(`"${filename}" re-translated successfully.`);
+    } else {
+      toast.error(`Retry failed: ${result.payload ?? "Unknown error"}`);
+    }
+  };
 
   const handleDelete = async (docId: string, filename: string) => {
     if (!confirm(`Delete "${filename}"? This will also remove files from storage.`)) return;
@@ -119,8 +128,18 @@ export default function DocumentList({ projectId, canDelete = false }: DocumentL
               rel="noopener noreferrer"
               className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-md shadow-sm transition-colors"
             >
-              ⬇ Download
+              Download
             </a>
+          )}
+          {d.status_display === "Failed" && d.source_download_url !== null && (
+            <Button
+              variant="secondary"
+              size="sm"
+              disabled={retrying.includes(d.id)}
+              onClick={() => handleRetry(d.id, d.original_filename)}
+            >
+              {retrying.includes(d.id) ? "Retrying…" : "Retry"}
+            </Button>
           )}
           {canDelete && (
             <Button
