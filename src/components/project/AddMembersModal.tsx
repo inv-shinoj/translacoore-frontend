@@ -3,7 +3,11 @@
 import { useEffect, useState } from "react";
 import api from "@/lib/api";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
-import { fetchEmployees, addProjectMember } from "@/store/slices/projectSlice";
+import {
+  fetchEmployees,
+  addProjectMember,
+  removeProjectMember,
+} from "@/store/slices/projectSlice";
 import { ProjectMember, MemberRole } from "@/types/api";
 import { toast } from "sonner";
 import Avatar from "@/components/ui/Avatar";
@@ -33,6 +37,7 @@ export default function AddMembersModal({ projectId, projectName, onClose }: Pro
   const [membersLoading, setMembersLoading] = useState(true);
   const [selectedUserId, setSelectedUserId] = useState("");
   const [selectedRole, setSelectedRole] = useState<MemberRole>(3);
+  const [removingMemberId, setRemovingMemberId] = useState<number | null>(null);
 
   useEffect(() => {
     if (employees.length === 0) dispatch(fetchEmployees());
@@ -62,6 +67,21 @@ export default function AddMembersModal({ projectId, projectName, onClose }: Pro
       const err = result.payload as any;
       toast.error(typeof err === "string" ? err : err?.detail || "Failed to add member.");
     }
+  };
+
+  const handleRemove = async (memberId: number) => {
+    setRemovingMemberId(memberId);
+
+    const result = await dispatch(removeProjectMember({ projectId, memberId }));
+
+    if (removeProjectMember.fulfilled.match(result)) {
+      setMembers((prev) => prev.filter((member) => member.id !== memberId));
+    } else {
+      const err = result.payload as any;
+      toast.error(typeof err === "string" ? err : err?.detail || "Failed to remove member.");
+    }
+
+    setRemovingMemberId(null);
   };
 
   return (
@@ -150,7 +170,18 @@ export default function AddMembersModal({ projectId, projectName, onClose }: Pro
                           <p className="text-xs text-gray-400 truncate">{m.email}</p>
                         </div>
                       </div>
-                      <Badge variant="default">{m.role_display}</Badge>
+                      <div className="flex items-center gap-2">
+                        <Badge variant="default">{m.role_display}</Badge>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleRemove(m.id)}
+                          disabled={submitting || removingMemberId === m.id}
+                        >
+                          {removingMemberId === m.id ? "Removing…" : "Remove"}
+                        </Button>
+                      </div>
                     </li>
                   ))}
                 </ul>

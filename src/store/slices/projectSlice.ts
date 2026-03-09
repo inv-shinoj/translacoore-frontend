@@ -96,6 +96,26 @@ export const addProjectMember = createAsyncThunk<ProjectMember, AddMemberPayload
   }
 );
 
+export const removeProjectMember = createAsyncThunk<
+  number,
+  { projectId: string; memberId: number }
+>(
+  "project/removeProjectMember",
+  async ({ projectId, memberId }, { rejectWithValue }) => {
+    console.log("[Project] Removing member from project:", projectId, memberId);
+    try {
+      await api.delete(`/api/project/${projectId}/members/${memberId}/`);
+      console.log("[Project] Member removed:", memberId);
+      return memberId;
+    } catch (err: any) {
+      console.error("[Project] Failed to remove member:", err.response?.data);
+      return rejectWithValue(
+        err.response?.data || "Failed to remove member"
+      );
+    }
+  }
+);
+
 export const fetchProjectDetail = createAsyncThunk<ProjectDetail, string>(
   "project/fetchDetail",
   async (id, { rejectWithValue }) => {
@@ -198,6 +218,19 @@ const projectSlice = createSlice({
         state.submitting = false;
       })
       .addCase(addProjectMember.rejected, (state) => {
+        state.submitting = false;
+      });
+
+    // removeProjectMember
+    builder
+      .addCase(removeProjectMember.pending, (state) => {
+        state.submitting = true;
+        state.error = null;
+      })
+      .addCase(removeProjectMember.fulfilled, (state) => {
+        state.submitting = false;
+      })
+      .addCase(removeProjectMember.rejected, (state) => {
         state.submitting = false;
       });
 
