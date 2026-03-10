@@ -106,7 +106,7 @@ export default function EmployeeProjectDetailPage() {
       {/* ── Documents section ─────────────────── */}
       <div className="mt-6 space-y-4">
         <DocumentUploadPanel projectId={project.id} />
-        <DocumentList projectId={project.id} />
+        <DocumentList projectId={project.id} canDelete={project.my_role === "Lead"} />
       </div>
     </>
   );

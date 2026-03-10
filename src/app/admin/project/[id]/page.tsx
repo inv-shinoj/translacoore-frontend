@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { fetchProjectDetail } from "@/store/slices/projectSlice";
@@ -9,12 +9,14 @@ import Badge from "@/components/ui/Badge";
 import Button from "@/components/ui/Button";
 import LoadingState from "@/components/ui/LoadingState";
 import ProjectStatusBadge from "@/components/project/ProjectStatusBadge";
+import AddMembersModal from "@/components/project/AddMembersModal";
 import MetaCard from "@/components/ui/MetaCard";
 import DocumentUploadPanel from "@/components/project/DocumentUploadPanel";
 import DocumentList from "@/components/project/DocumentList";
 
 export default function AdminProjectDetailPage() {
   const { id } = useParams<{ id: string }>();
+  const [showMembersModal, setShowMembersModal] = useState(false);
   const dispatch = useAppDispatch();
   const router = useRouter();
   const { currentProject: project, currentProjectLoading: loading, error } =
@@ -45,6 +47,9 @@ export default function AdminProjectDetailPage() {
         actions={
           <div className="flex items-center gap-2">
             <ProjectStatusBadge status={project.status_display} />
+            <Button variant="primary" size="sm" onClick={() => setShowMembersModal(true)}>
+              Members
+            </Button>
             <Button variant="secondary" size="sm" onClick={() => router.back()}>
               ← Back
             </Button>
@@ -105,6 +110,14 @@ export default function AdminProjectDetailPage() {
         <DocumentUploadPanel projectId={project.id} />
         <DocumentList projectId={project.id} canDelete />
       </div>
+
+      {showMembersModal && (
+        <AddMembersModal
+          projectId={project.id}
+          projectName={project.name}
+          onClose={() => setShowMembersModal(false)}
+        />
+      )}
     </>
   );
 }
