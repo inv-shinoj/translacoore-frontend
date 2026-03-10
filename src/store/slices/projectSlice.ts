@@ -5,6 +5,7 @@ import {
   ProjectDetail,
   ProjectState,
   CreateProjectPayload,
+  UpdateProjectPayload,
   MemberUser,
   ProjectMember,
   AddMemberPayload,
@@ -58,6 +59,24 @@ export const deleteProject = createAsyncThunk<string, string>(
       return rejectWithValue(
         err.response?.data?.detail || "Failed to delete project"
       );
+    }
+  }
+);
+
+export const updateProject = createAsyncThunk<
+  Project,
+  { projectId: string; payload: UpdateProjectPayload }
+>(
+  "project/updateProject",
+  async ({ projectId, payload }, { rejectWithValue }) => {
+    console.log("[Project] Updating project:", projectId);
+    try {
+      const res = await api.patch<Project>(`/api/project/${projectId}/`, payload);
+      console.log("[Project] Project updated:", res.data.id, res.data.status_display);
+      return res.data;
+    } catch (err: any) {
+      console.error("[Project] Failed to update project:", err.response?.data);
+      return rejectWithValue(err.response?.data || "Failed to update project");
     }
   }
 );
@@ -214,6 +233,23 @@ const projectSlice = createSlice({
         state.projects = state.projects.filter(p => p.id !== action.payload);
       })
       .addCase(deleteProject.rejected, (state, action) => {
+        state.submitting = false;
+        state.error = action.payload as string;
+      });
+
+    // updateProject
+    builder
+      .addCase(updateProject.pending, (state) => {
+        state.submitting = true;
+        state.error = null;
+      })
+      .addCase(updateProject.fulfilled, (state, action) => {
+        state.submitting = false;
+        state.projects = state.projects.map((project) =>
+          project.id === action.payload.id ? action.payload : project
+        );
+      })
+      .addCase(updateProject.rejected, (state, action) => {
         state.submitting = false;
         state.error = action.payload as string;
       });

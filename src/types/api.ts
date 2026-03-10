@@ -34,6 +34,12 @@ export interface CreateProjectPayload {
   project_data: Record<string, any>;
 }
 
+export interface UpdateProjectPayload {
+  name?: string;
+  project_data?: Record<string, any>;
+  status?: number;
+}
+
 export interface ProjectState {
   projects: Project[];
   loading: boolean;

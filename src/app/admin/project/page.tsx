@@ -14,6 +14,7 @@ import ProjectStatusBadge from "@/components/project/ProjectStatusBadge";
 import ProjectNameCell from "@/components/project/ProjectNameCell";
 import CreateProjectModal from "@/components/project/CreateProjectModal";
 import AddMembersModal from "@/components/project/AddMembersModal";
+import EditProjectModal from "@/components/project/EditProjectModal";
 import { Project, ProjectStatus } from "@/types/api";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { fetchProjects, clearProjectError } from "@/store/slices/projectSlice";
@@ -27,6 +28,7 @@ export default function ProjectsPage() {
   const [search, setSearch] = useState("");
   const [showModal, setShowModal] = useState(false);
   const [memberProject, setMemberProject] = useState<Project | null>(null);
+  const [editProject, setEditProject] = useState<Project | null>(null);
   const router = useRouter();
 
   const dispatch = useAppDispatch();
@@ -96,7 +98,11 @@ export default function ProjectsPage() {
             </Button>
           )}
           <Button variant="ghost" size="sm" onClick={() => router.push(`/admin/project/${p.id}`)}>View</Button>
-          <Button variant="secondary" size="sm">Edit</Button>
+          {canCreate && (
+            <Button variant="secondary" size="sm" onClick={() => setEditProject(p)}>
+              Edit
+            </Button>
+          )}
         </div>
       ),
     },
@@ -155,6 +161,12 @@ export default function ProjectsPage() {
           projectId={memberProject.id}
           projectName={memberProject.name}
           onClose={() => setMemberProject(null)}
+        />
+      )}
+      {editProject && (
+        <EditProjectModal
+          projectId={editProject.id}
+          onClose={() => setEditProject(null)}
         />
       )}
     </>
