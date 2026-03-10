@@ -34,6 +34,12 @@ export interface CreateProjectPayload {
   project_data: Record<string, any>;
 }
 
+export interface UpdateProjectPayload {
+  name?: string;
+  project_data?: Record<string, any>;
+  status?: number;
+}
+
 export interface ProjectState {
   projects: Project[];
   loading: boolean;
@@ -41,6 +47,7 @@ export interface ProjectState {
   error: string | null;
   employees: MemberUser[];
   employeesLoading: boolean;
+  employeesError: string | null;
   currentProject: ProjectDetail | null;
   currentProjectLoading: boolean;
 }
@@ -67,6 +74,12 @@ export interface ProjectMember {
 export interface AddMemberPayload {
   projectId: string;
   user_id: string;
+  role: MemberRole;
+}
+
+export interface UpdateMemberRolePayload {
+  projectId: string;
+  memberId: number;
   role: MemberRole;
 }
 
@@ -113,3 +126,37 @@ export interface FormState {
   submitting: boolean;
   error: string | null;
 }
+
+// ── Documents ────────────────────────────────────────────────
+
+export type DocumentStatus = "Uploaded" | "Translating" | "Completed" | "Failed";
+export type FileTypeDisplay = "txt" | "pdf" | "docx" | "xlsx";
+
+export interface DocumentFile {
+  id: string;
+  original_filename: string;
+  file_type: number;
+  file_type_display: FileTypeDisplay;
+  source_language: string;
+  target_language: string;
+  status: number;
+  status_display: DocumentStatus;
+  file_size: number;
+  page_count: number | null;
+  uploaded_by_name: string;
+  error_message?: string;
+  source_download_url: string | null;
+  translated_download_url: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface DocumentsState {
+  documents: DocumentFile[];
+  currentProjectId: string | null; // tracks which project's docs are loaded
+  loading: boolean;
+  uploading: boolean;
+  retrying: string[];   // doc IDs currently being retried
+  error: string | null;
+}
+

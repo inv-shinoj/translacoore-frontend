@@ -5,9 +5,11 @@ import {
   ProjectDetail,
   ProjectState,
   CreateProjectPayload,
+  UpdateProjectPayload,
   MemberUser,
   ProjectMember,
   AddMemberPayload,
+  UpdateMemberRolePayload,
 } from "@/types/api";
 
 export const fetchProjects = createAsyncThunk<Project[]>(
@@ -61,6 +63,24 @@ export const deleteProject = createAsyncThunk<string, string>(
   }
 );
 
+export const updateProject = createAsyncThunk<
+  Project,
+  { projectId: string; payload: UpdateProjectPayload }
+>(
+  "project/updateProject",
+  async ({ projectId, payload }, { rejectWithValue }) => {
+    console.log("[Project] Updating project:", projectId);
+    try {
+      const res = await api.patch<Project>(`/api/project/${projectId}/`, payload);
+      console.log("[Project] Project updated:", res.data.id, res.data.status_display);
+      return res.data;
+    } catch (err: any) {
+      console.error("[Project] Failed to update project:", err.response?.data);
+      return rejectWithValue(err.response?.data || "Failed to update project");
+    }
+  }
+);
+
 export const fetchEmployees = createAsyncThunk<MemberUser[]>(
   "project/fetchEmployees",
   async (_, { rejectWithValue }) => {
@@ -96,6 +116,47 @@ export const addProjectMember = createAsyncThunk<ProjectMember, AddMemberPayload
   }
 );
 
+export const updateProjectMemberRole = createAsyncThunk<
+  ProjectMember,
+  UpdateMemberRolePayload
+>(
+  "project/updateProjectMemberRole",
+  async ({ projectId, memberId, role }, { rejectWithValue }) => {
+    console.log("[Project] Updating member role:", projectId, memberId, role);
+    try {
+      const res = await api.patch<ProjectMember>(
+        `/api/project/${projectId}/members/${memberId}/role/`,
+        { role }
+      );
+      console.log("[Project] Member role updated:", res.data.id, res.data.role_display);
+      return res.data;
+    } catch (err: any) {
+      console.error("[Project] Failed to update member role:", err.response?.data);
+      return rejectWithValue(err.response?.data || "Failed to update member role");
+    }
+  }
+);
+
+export const removeProjectMember = createAsyncThunk<
+  number,
+  { projectId: string; memberId: number }
+>(
+  "project/removeProjectMember",
+  async ({ projectId, memberId }, { rejectWithValue }) => {
+    console.log("[Project] Removing member from project:", projectId, memberId);
+    try {
+      await api.delete(`/api/project/${projectId}/members/${memberId}/`);
+      console.log("[Project] Member removed:", memberId);
+      return memberId;
+    } catch (err: any) {
+      console.error("[Project] Failed to remove member:", err.response?.data);
+      return rejectWithValue(
+        err.response?.data || "Failed to remove member"
+      );
+    }
+  }
+);
+
 export const fetchProjectDetail = createAsyncThunk<ProjectDetail, string>(
   "project/fetchDetail",
   async (id, { rejectWithValue }) => {
@@ -117,6 +178,7 @@ const initialState: ProjectState = {
   error: null,
   employees: [],
   employeesLoading: false,
+  employeesError: null,
   currentProject: null,
   currentProjectLoading: false,
 };
@@ -175,17 +237,37 @@ const projectSlice = createSlice({
         state.error = action.payload as string;
       });
 
+    // updateProject
+    builder
+      .addCase(updateProject.pending, (state) => {
+        state.submitting = true;
+        state.error = null;
+      })
+      .addCase(updateProject.fulfilled, (state, action) => {
+        state.submitting = false;
+        state.projects = state.projects.map((project) =>
+          project.id === action.payload.id ? action.payload : project
+        );
+      })
+      .addCase(updateProject.rejected, (state, action) => {
+        state.submitting = false;
+        state.error = action.payload as string;
+      });
+
     // fetchEmployees
     builder
       .addCase(fetchEmployees.pending, (state) => {
         state.employeesLoading = true;
+        state.employeesError = null;
       })
       .addCase(fetchEmployees.fulfilled, (state, action) => {
         state.employeesLoading = false;
         state.employees = action.payload;
+        state.employeesError = null;
       })
-      .addCase(fetchEmployees.rejected, (state) => {
+      .addCase(fetchEmployees.rejected, (state, action) => {
         state.employeesLoading = false;
+        state.employeesError = (action.payload as string) ?? "Failed to fetch users";
       });
 
     // addProjectMember — no state change needed; modal manages its own member list
@@ -198,6 +280,32 @@ const projectSlice = createSlice({
         state.submitting = false;
       })
       .addCase(addProjectMember.rejected, (state) => {
+        state.submitting = false;
+      });
+
+    // updateProjectMemberRole
+    builder
+      .addCase(updateProjectMemberRole.pending, (state) => {
+        state.submitting = true;
+        state.error = null;
+      })
+      .addCase(updateProjectMemberRole.fulfilled, (state) => {
+        state.submitting = false;
+      })
+      .addCase(updateProjectMemberRole.rejected, (state) => {
+        state.submitting = false;
+      });
+
+    // removeProjectMember
+    builder
+      .addCase(removeProjectMember.pending, (state) => {
+        state.submitting = true;
+        state.error = null;
+      })
+      .addCase(removeProjectMember.fulfilled, (state) => {
+        state.submitting = false;
+      })
+      .addCase(removeProjectMember.rejected, (state) => {
         state.submitting = false;
       });
 

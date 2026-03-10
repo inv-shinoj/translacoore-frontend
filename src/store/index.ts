@@ -15,6 +15,7 @@ import dashboardReducer from "./slices/dashboadSlice";
 import projectReducer from "./slices/projectSlice";
 import formReducer from "./slices/formSlice";
 import usersReducer from "./slices/usersSlice";
+import documentsReducer from "./slices/documentsSlice";
 
 const authPersistConfig = {
   key: "auth",
@@ -28,6 +29,7 @@ const rootReducer = combineReducers({
   project: projectReducer,
   form: formReducer,
   users: usersReducer,
+  documents: documentsReducer,
 });
 
 export const store = configureStore({

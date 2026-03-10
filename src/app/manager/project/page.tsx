@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import PageHeader from "@/components/ui/PageHeader";
 import Button from "@/components/ui/Button";
 import Card from "@/components/ui/Card";
@@ -13,6 +14,7 @@ import ProjectStatusBadge from "@/components/project/ProjectStatusBadge";
 import ProjectNameCell from "@/components/project/ProjectNameCell";
 import CreateProjectModal from "@/components/project/CreateProjectModal";
 import AddMembersModal from "@/components/project/AddMembersModal";
+import EditProjectModal from "@/components/project/EditProjectModal";
 import { Project, ProjectStatus } from "@/types/api";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { fetchProjects, clearProjectError } from "@/store/slices/projectSlice";
@@ -26,6 +28,8 @@ export default function ManagerProjectsPage() {
   const [search, setSearch] = useState("");
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [memberProject, setMemberProject] = useState<Project | null>(null);
+  const [editProject, setEditProject] = useState<Project | null>(null);
+  const router = useRouter();
 
   const dispatch = useAppDispatch();
   const { projects } = useAppSelector((s) => s.project);
@@ -83,7 +87,10 @@ export default function ManagerProjectsPage() {
           <Button variant="ghost" size="sm" onClick={() => setMemberProject(p)}>
             Members
           </Button>
-          <Button variant="secondary" size="sm">Edit</Button>
+          <Button variant="ghost" size="sm" onClick={() => router.push(`/manager/project/${p.id}`)}>View</Button>
+          <Button variant="secondary" size="sm" onClick={() => setEditProject(p)}>
+            Edit
+          </Button>
         </div>
       ),
     },
@@ -136,6 +143,12 @@ export default function ManagerProjectsPage() {
           projectId={memberProject.id}
           projectName={memberProject.name}
           onClose={() => setMemberProject(null)}
+        />
+      )}
+      {editProject && (
+        <EditProjectModal
+          projectId={editProject.id}
+          onClose={() => setEditProject(null)}
         />
       )}
     </>

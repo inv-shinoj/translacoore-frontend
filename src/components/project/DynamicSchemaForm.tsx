@@ -8,12 +8,13 @@ interface Props {
   values: Record<string, string>;
   errors: Record<string, string>;
   onChange: (key: string, value: string) => void;
+  disabled?: boolean;
 }
 
 const textareaBase =
   "w-full px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent resize-y";
 
-export default function DynamicSchemaForm({ fields, values, errors, onChange }: Props) {
+export default function DynamicSchemaForm({ fields, values, errors, onChange, disabled = false }: Props) {
   return (
     <div className="space-y-4">
       {fields.map((field) => (
@@ -28,6 +29,7 @@ export default function DynamicSchemaForm({ fields, values, errors, onChange }: 
               rows={3}
               value={values[field.key] ?? ""}
               onChange={(e) => onChange(field.key, e.target.value)}
+              disabled={disabled}
               className={`${textareaBase} ${
                 errors[field.key] ? "border-red-400" : "border-gray-300"
               }`}
@@ -37,6 +39,7 @@ export default function DynamicSchemaForm({ fields, values, errors, onChange }: 
               value={values[field.key] ?? ""}
               onChange={(e) => onChange(field.key, e.target.value)}
               error={!!errors[field.key]}
+              disabled={disabled}
             >
               <option value="" disabled>Select…</option>
               {field.options?.map((opt) => (
@@ -49,6 +52,7 @@ export default function DynamicSchemaForm({ fields, values, errors, onChange }: 
               value={values[field.key] ?? ""}
               onChange={(e) => onChange(field.key, e.target.value)}
               error={!!errors[field.key]}
+              disabled={disabled}
             />
           )}
         </FormField>
